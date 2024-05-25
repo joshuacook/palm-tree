@@ -12,9 +12,8 @@ local beat_position = 1
 local page = 1
 local bpm = 91
 local current_filename = "steps-001.txt"
-
-
-position = 1
+local output_position = 7
+local position = 1
 
 function connect()
     keyb = hid.connect()
@@ -27,6 +26,24 @@ function keyboard_event(typ, code, val)
         clock:stop()
     elseif code == 313 then
         clock:start()
+    elseif code == 712 and val == 1 then
+        output_position = output_position - 1
+        update_output_level(output_position)
+    elseif code == 713 and val == 1 then
+        output_position = output_position + 1
+        update_output_level(output_position)
+    end
+    redraw()
+end
+
+function update_output_level(position)
+    if position >= 1 and position <= 15 then
+        -- Map position 1 to -inf and position 15 to 6.0
+        local min_val = -57.0
+        local max_val = 6.0
+        local output_level = ((position - 1) / 14) * (max_val - min_val) + min_val
+        print(output_level)
+        params:set("output_level", output_level)
     end
 end
 
@@ -48,9 +65,8 @@ function init()
     steps = include('data/steps')
     clock.on_step = beat
     clock:bpm_change(bpm)
-    
     connect()
-    
+
     load_steps_from_file(current_filename)
 
     redraw()
@@ -96,8 +112,11 @@ end
 function redraw()
     screen.clear()
     if page == 1 then
-        screen.move(64, 32)
-        screen.text_center("BPM: " .. bpm)
+        screen.move(8, 8)
+        screen.text("BPM: " .. bpm)
+        screen.move(8, 16)
+        local output_level = params:get("output_level")
+        screen.text("Output Level: " .. (output_level == -math.huge and "-inf" or string.format("%.2f", output_level)))
     elseif page == 2 then
         screen.move(64, 32)
         screen.text_center("Load Screen")
