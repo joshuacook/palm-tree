@@ -38,7 +38,6 @@ end
 
 function update_output_level(position)
     if position >= 1 and position <= 15 then
-        -- Map position 1 to -inf and position 15 to 6.0
         local min_val = -57.0
         local max_val = 6.0
         local output_level = ((position - 1) / 14) * (max_val - min_val) + min_val
@@ -78,13 +77,7 @@ function enc(n, d)
     elseif n == 2 then
         if page == 1 then
             set_bpm(bpm + d)
-        elseif page == 2 then
-            -- Adjust the integer value of current_filename for loading
-            local base, num, ext = string.match(current_filename, "(steps%-)(%d+)(%.txt)")
-            num = tonumber(num) + d
-            current_filename = base .. string.format("%03d", num) .. ext
-        elseif page == 3 then
-            -- Adjust the integer value of current_filename for saving
+        elseif page == 2 or page == 3 then
             local base, num, ext = string.match(current_filename, "(steps%-)(%d+)(%.txt)")
             num = tonumber(num) + d
             current_filename = base .. string.format("%03d", num) .. ext
