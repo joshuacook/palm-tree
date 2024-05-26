@@ -1,6 +1,4 @@
-include('lib/helpers')
 include('lib/screen')
-
 sequencer = include('lib/sequencer')
 
 local my_grid = grid.connect()
@@ -8,8 +6,6 @@ local page = 1
 local current_filename = "steps-001.txt"
 local output_position = 7
 params:set("output_level", -30.00)
-
-steps = include('data/steps')
 
 function init()
     audio.level_cut(1.0)
@@ -86,6 +82,20 @@ end
 function connect_hid()
     keyb = hid.connect()
     keyb.event = keyboard_event
+end
+
+function compute_output_level(code, position)
+    if code == 712 then
+        position = position - 1
+    else
+        position = position + 1
+    end
+    if position >= 1 and position <= 15 then
+        local min_val = -57.0
+        local max_val = 6.0
+        local output_level = ((position - 1) / 14) * (max_val - min_val) + min_val
+        return output_level, position
+    end
 end
 
 function keyboard_event(typ, code, val)
