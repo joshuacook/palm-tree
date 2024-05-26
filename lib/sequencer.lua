@@ -1,4 +1,4 @@
-local patterns_directory = _path.dust .. "code/beat/patterns/"
+local patterns_directory = _path.dust .. "code/palm-tree/patterns/"
 local sequencer = {}
 local BeatClock = require 'beatclock'
 

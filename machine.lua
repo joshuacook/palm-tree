@@ -15,7 +15,7 @@ function init()
     softcut.buffer(3, 1)
     softcut.buffer_clear()
 
-    drum_players = dofile(_path.dust .. "code/beat/lib/drum_players.lua")
+    drum_players = dofile(_path.dust .. "code/palm-tree/lib/drum_players.lua")
     sequencer.init(drum_players, my_grid)
 
     connect_hid()
