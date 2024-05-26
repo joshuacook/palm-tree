@@ -5,31 +5,13 @@ include('lib/screen')
 
 local BeatClock = require 'beatclock'
 local clock = BeatClock.new()
-local g = grid.connect()
+local my_grid = grid.connect()
 
 local beat_position = 1
 local page = 1
 local bpm = 91
 local current_filename = "steps-001.txt"
 local output_position = 7
-
-function connect()
-    keyb = hid.connect()
-    keyb.event = keyboard_event
-end
-
-function keyboard_event(typ, code, val)
-    if code == 312 then
-        clock:stop()
-    elseif code == 313 then
-        clock:start()
-    elseif val == 1 and (code == 712 or code == 713) then
-        local output_level, position = compute_output_level(code, output_position)
-        params:set("output_level", output_level)
-        output_position = position
-    end
-    redraw()
-end
 
 function init()
     audio.level_cut(1.0)
@@ -41,7 +23,7 @@ function init()
     local players = dofile(_path.dust .. "code/beat/lib/voice.lua")
 
     steps = include('data/steps')
-    clock.on_step = beat
+    clock.on_step = beat_call
     clock:bpm_change(bpm)
     connect()
 
@@ -50,12 +32,23 @@ function init()
     redraw()
 end
 
+function beat_call()
+    play(beat_position, players)
+    beat_position = (beat_position % 16) + 1
+    grid_redraw(my_grid, steps)
+    draw_beat(my_grid, beat_position)
+    redraw()
+end
+
+-- NORNS INTERFACE
+
 function enc(n, d)
     if n == 1 then
         page = util.clamp(page + d, 1, 3)
     elseif n == 2 then
         if page == 1 then
-            set_bpm(bpm + d)
+            bpm = bpm + d
+            clock:bpm_change(bpm)
         elseif page == 2 or page == 3 then
             local base, num, ext = string.match(current_filename, "(steps%-)(%d+)(%.txt)")
             num = tonumber(num) + d
@@ -75,11 +68,33 @@ function key(n, z)
     end
 end
 
-function g.key(x, y, z)
+function my_grid.key(x, y, z)
     if z == 1 then 
         steps[y][x] = (steps[y][x] + 1) % 4
     end
 end
+
+-- CONTROL INTERFACE
+
+function connect()
+    keyb = hid.connect()
+    keyb.event = keyboard_event
+end
+
+function keyboard_event(typ, code, val)
+    if code == 312 then
+        clock:stop()
+    elseif code == 313 then
+        clock:start()
+    elseif val == 1 and (code == 712 or code == 713) then
+        local output_level, position = compute_output_level(code, output_position)
+        params:set("output_level", output_level)
+        output_position = position
+    end
+    redraw()
+end
+
+-- SCREEN
 
 function redraw()
     screen.clear()
@@ -92,17 +107,4 @@ function redraw()
         page_3(screen, current_filename)
     end
     screen.update()
-end
-
-function beat()
-    play(beat_position, players)
-    beat_position = (beat_position % 16) + 1
-    grid_redraw(g, steps)
-    draw_beat(g, beat_position)
-    redraw()
-end
-
-function set_bpm(new_bpm)
-    bpm = new_bpm
-    clock:bpm_change(bpm)
 end
