@@ -4,14 +4,17 @@ include('lib/sequencer')
 include('lib/screen')
 
 local BeatClock = require 'beatclock'
-local clock = BeatClock.new()
-local my_grid = grid.connect()
-
 local beat_position = 1
-local page = 1
 local bpm = 91
+local clock = BeatClock.new()
+
+local my_grid = grid.connect()
+local page = 1
 local current_filename = "steps-001.txt"
 local output_position = 7
+params:set("output_level", -30.00)
+
+steps = include('data/steps')
 
 function init()
     audio.level_cut(1.0)
@@ -22,11 +25,9 @@ function init()
     softcut.buffer_clear()
 
     drum_players = dofile(_path.dust .. "code/beat/lib/drum_players.lua")
-
-    steps = include('data/steps')
     clock.on_step = beat_call
     clock:bpm_change(bpm)
-    connect()
+    connect_hid()
 
     load_steps_from_file(current_filename)
 
@@ -94,7 +95,7 @@ end
 
 -- CONTROL INTERFACE
 
-function connect()
+function connect_hid()
     keyb = hid.connect()
     keyb.event = keyboard_event
 end
