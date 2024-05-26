@@ -1,12 +1,7 @@
 include('lib/helpers')
-include('lib/io')
-include('lib/sequencer')
 include('lib/screen')
 
-local BeatClock = require 'beatclock'
-local beat_position = 1
-local bpm = 91
-local clock = BeatClock.new()
+sequencer = include('lib/sequencer')
 
 local my_grid = grid.connect()
 local page = 1
@@ -25,20 +20,12 @@ function init()
     softcut.buffer_clear()
 
     drum_players = dofile(_path.dust .. "code/beat/lib/drum_players.lua")
-    clock.on_step = beat_call
-    clock:bpm_change(bpm)
+    sequencer.init(drum_players, my_grid)
+
     connect_hid()
 
-    load_steps_from_file(current_filename)
+    sequencer.load_steps_from_file(current_filename)
 
-    redraw()
-end
-
-function beat_call()
-    play(beat_position, drum_players)
-    beat_position = (beat_position % 16) + 1
-    grid_redraw(my_grid, steps)
-    draw_beat(my_grid, beat_position)
     redraw()
 end
 
@@ -49,8 +36,8 @@ function enc(n, d)
         page = util.clamp(page + d, 1, 3)
     elseif n == 2 then
         if page == 1 then
-            bpm = bpm + d
-            clock:bpm_change(bpm)
+            sequencer.bpm = sequencer.bpm + d
+            sequencer.clock:bpm_change(sequencer.bpm)
         elseif page == 2 or page == 3 then
             local base, num, ext = string.match(current_filename, "(steps%-)(%d+)(%.txt)")
             num = tonumber(num) + d
@@ -63,9 +50,9 @@ end
 function key(n, z)
     if n == 2 and z == 1 then
         if page == 2 then
-            load_steps_from_file(current_filename)
+            sequencer.load_steps_from_file(current_filename)
         elseif page == 3 then
-            save_steps_to_file(current_filename)
+            sequencer.save_steps_to_file(current_filename)
         end
     end
 end
@@ -76,7 +63,7 @@ function redraw()
     screen.clear()
     if page == 1 then
         local output_level = params:get("output_level")
-        page_1(screen, bpm, output_level)
+        page_1(screen, sequencer.bpm, output_level)
     elseif page == 2 then
         page_2(screen, current_filename)
     elseif page == 3 then
@@ -89,8 +76,9 @@ end
 
 function my_grid.key(x, y, z)
     if z == 1 then 
-        steps[y][x] = (steps[y][x] + 1) % 4
+        sequencer.set_step(x, y, (sequencer.steps[y][x] + 1) % 4)
     end
+    sequencer.grid_redraw()
 end
 
 -- CONTROL INTERFACE
@@ -102,9 +90,9 @@ end
 
 function keyboard_event(typ, code, val)
     if code == 312 then
-        clock:stop()
+        sequencer.clock:stop()
     elseif code == 313 then
-        clock:start()
+        sequencer.clock:start()
     elseif val == 1 and (code == 712 or code == 713) then
         local output_level, position = compute_output_level(code, output_position)
         params:set("output_level", output_level)
