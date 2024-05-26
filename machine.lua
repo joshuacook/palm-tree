@@ -20,7 +20,8 @@ function init()
     softcut.buffer(2, 1)
     softcut.buffer(3, 1)
     softcut.buffer_clear()
-    local players = dofile(_path.dust .. "code/beat/lib/voice.lua")
+
+    drum_players = dofile(_path.dust .. "code/beat/lib/drum_players.lua")
 
     steps = include('data/steps')
     clock.on_step = beat_call
@@ -33,7 +34,7 @@ function init()
 end
 
 function beat_call()
-    play(beat_position, players)
+    play(beat_position, drum_players)
     beat_position = (beat_position % 16) + 1
     grid_redraw(my_grid, steps)
     draw_beat(my_grid, beat_position)
@@ -68,6 +69,23 @@ function key(n, z)
     end
 end
 
+-- NORNS SCREEN
+
+function redraw()
+    screen.clear()
+    if page == 1 then
+        local output_level = params:get("output_level")
+        page_1(screen, bpm, output_level)
+    elseif page == 2 then
+        page_2(screen, current_filename)
+    elseif page == 3 then
+        page_3(screen, current_filename)
+    end
+    screen.update()
+end
+
+-- GRID INTERFACE
+
 function my_grid.key(x, y, z)
     if z == 1 then 
         steps[y][x] = (steps[y][x] + 1) % 4
@@ -92,19 +110,4 @@ function keyboard_event(typ, code, val)
         output_position = position
     end
     redraw()
-end
-
--- SCREEN
-
-function redraw()
-    screen.clear()
-    if page == 1 then
-        local output_level = params:get("output_level")
-        page_1(screen, bpm, output_level)
-    elseif page == 2 then
-        page_2(screen, current_filename)
-    elseif page == 3 then
-        page_3(screen, current_filename)
-    end
-    screen.update()
 end
