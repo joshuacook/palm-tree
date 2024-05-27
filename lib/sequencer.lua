@@ -10,6 +10,7 @@ function sequencer.init(players, grid)
     sequencer.players = players
     sequencer.clock.on_step = sequencer.update
     sequencer.grid = grid
+    sequencer.playing = false
 
     sequencer.steps = {}
     for y = 1, 5 do
@@ -66,7 +67,6 @@ function sequencer.play(beat_position, players)
     for y = 1, 5 do
         local value = sequencer.steps[y][beat_position]
         if value > 0 then
-            print("playing " .. y .. " " .. value)
             players[y](value)
         end
     end

@@ -1,11 +1,12 @@
 include('lib/screen')
+my_hid = include('lib/hid')
 sequencer = include('lib/sequencer')
 
 local my_grid = grid.connect()
 local page = 1
 local current_filename = "steps-001.txt"
 local output_position = 7
-params:set("output_level", -30.00)
+params:set("output_level", 6.00)
 
 function init()
     audio.level_cut(1.0)
@@ -17,13 +18,33 @@ function init()
 
     drum_players = dofile(_path.dust .. "code/palm-tree/lib/drum_players.lua")
     sequencer.init(drum_players, my_grid)
-
-    connect_hid()
-
     sequencer.load_steps_from_file(current_filename)
+
+    interface = hid.connect()
+    print(interface)
+    if interface ~= nil then
+        my_hid.init(sequencer, interface, params)
+    end
+
+    prev_output_level = params:get("output_level")
+
+    metro.init{
+      event = check_param_change,
+      time = 0.2,
+      count = -1
+    }:start()
 
     redraw()
 end
+
+function check_param_change()
+    local current_output_level = params:get("output_level")
+
+    if current_output_level ~= prev_output_level then
+      prev_output_level = current_output_level
+      redraw()
+    end
+  end
 
 -- NORNS INTERFACE
 
@@ -39,13 +60,26 @@ function enc(n, d)
             num = tonumber(num) + d
             current_filename = base .. string.format("%03d", num) .. ext
         end
+    elseif n == 3 then
+        if page == 1 then
+            local current_output_level = params:get("output_level")
+            params:set("output_level", util.clamp(current_output_level + d, -60.00, 60.00))
+        end
     end
     redraw()
 end
 
 function key(n, z)
     if n == 2 and z == 1 then
-        if page == 2 then
+        if page == 1 then
+            if sequencer.playing then
+                sequencer.clock:stop()
+                sequencer.playing = false
+            else
+                sequencer.clock:start()
+                sequencer.playing = true
+            end
+        elseif page == 2 then
             sequencer.load_steps_from_file(current_filename)
         elseif page == 3 then
             sequencer.save_steps_to_file(current_filename)
@@ -75,38 +109,4 @@ function my_grid.key(x, y, z)
         sequencer.set_step(x, y, (sequencer.steps[y][x] + 1) % 4)
     end
     sequencer.grid_redraw()
-end
-
--- CONTROL INTERFACE
-
-function connect_hid()
-    keyb = hid.connect()
-    keyb.event = keyboard_event
-end
-
-function compute_output_level(code, position)
-    if code == 712 then
-        position = position - 1
-    else
-        position = position + 1
-    end
-    if position >= 1 and position <= 15 then
-        local min_val = -57.0
-        local max_val = 6.0
-        local output_level = ((position - 1) / 14) * (max_val - min_val) + min_val
-        return output_level, position
-    end
-end
-
-function keyboard_event(typ, code, val)
-    if code == 312 then
-        sequencer.clock:stop()
-    elseif code == 313 then
-        sequencer.clock:start()
-    elseif val == 1 and (code == 712 or code == 713) then
-        local output_level, position = compute_output_level(code, output_position)
-        params:set("output_level", output_level)
-        output_position = position
-    end
-    redraw()
 end
