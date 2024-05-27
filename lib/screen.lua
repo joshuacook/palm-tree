@@ -14,7 +14,7 @@ function page_sampler(screen, sequencer, selected_drum)
     for i = 1, #sequencer.drum_keys do
         local y_pos = 8 + (i - 1) * 8
         screen.move(8, y_pos)
-        screen.text((i == selected_drum and ">" or " ") .. i .. " " .. sequencer.drum_keys[i] .. " " .. sequencer.drum_voice[i])
+        screen.text((i == selected_drum and ">" or " ") .. i .. " " .. sequencer.drum_keys[i])
     end
 
     screen.update()

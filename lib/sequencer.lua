@@ -29,7 +29,6 @@ function sequencer.init(grid, current_filename)
 
     init_drums()
     sequencer.drum_keys = {}
-    sequencer.drum_voice = {}
 
     sequencer.steps = {}
     for y = 1, 8 do
@@ -62,17 +61,6 @@ function sequencer.init(grid, current_filename)
     sequencer.configure_voice(4)
     sequencer.configure_voice(5)
     sequencer.configure_voice(6)
-
-    sequencer.players = {
-        function (value) sequencer.play_voice(1, value) end,
-        function (value) sequencer.play_voice(2, value) end,
-        function (value) sequencer.play_voice(3, value) end,
-        function (value) sequencer.play_voice(4, value) end,
-        function (value) sequencer.play_voice(5, value) end,
-        function (value) sequencer.play_voice(6, value) end,
-        function (value) sequencer.play_voice(7, value) end,
-        function (value) sequencer.play_voice(8, value) end
-    }
 end
 
 function sequencer.configure_voice(voice)
@@ -127,13 +115,10 @@ function sequencer.load_steps_from_file(filename)
                     sequencer.set_step(col, row, tonumber(step))
                 elseif col == 17 then
                     keys.drum_key = step
-                elseif col == 18 then
-                    keys.drum_voice = tonumber(step)
                 end
                 col = col + 1
             end
             sequencer.drum_keys[row] = keys.drum_key
-            sequencer.drum_voice[row] = keys.drum_voice
             row = row + 1
         end
     else
@@ -142,22 +127,23 @@ function sequencer.load_steps_from_file(filename)
 end
 
 function sequencer.play(beat_position)
+    local voice = 1
     for y = 1, 8 do
         local value = sequencer.steps[y][beat_position]
         if value > 0 then
-            sequencer.players[y](value)
+            sequencer.play_voice(voice, y, value)
+            voice = voice + 1
         end
     end
 end
 
-function sequencer.play_voice(drum_index, value)
-    local voice = sequencer.drum_voice[drum_index]
+function sequencer.play_voice(voice, drum_index, value)
     local drum_key = sequencer.drum_keys[drum_index]
     local drum = drums[drum_key]
     local start = drum.start
     local duration = drum.duration
     softcut.play(voice, 0)
-    softcut.level(voice, value*0.33)
+    softcut.level(voice, value * 0.33)
     softcut.loop_start(voice, start)
     softcut.loop_end(voice, start + duration - 0.01)
     softcut.position(voice, start)
@@ -174,7 +160,7 @@ function sequencer.save_steps_to_file(filename)
                 local step = sequencer.get_step(j, i)
                 line = line .. step .. " "
             end
-            line = line .. sequencer.drum_keys[i] .. " " .. sequencer.drum_voice[i]
+            line = line .. sequencer.drum_keys[i]
             file:write(line .. "\n")
         end
         file:close()

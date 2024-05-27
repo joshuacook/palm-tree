@@ -84,8 +84,6 @@ function enc(n, d)
         if page == 1 then
             local current_output_level = params:get("output_level")
             params:set("output_level", util.clamp(current_output_level + d, -60.00, 60.00))
-        elseif page == 2 then
-            sequencer.drum_voice[selected_drum] = util.clamp(sequencer.drum_voice[selected_drum] + d, 1, 6)
         end
     end
     redraw()
