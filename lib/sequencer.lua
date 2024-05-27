@@ -4,7 +4,6 @@ local sequencer = {}
 local BeatClock = require 'beatclock'
 local drums = {}
 
--- Function to get the duration of an audio file using soxi
 local function get_duration(file)
     local handle = io.popen("soxi -D " .. file)
     local result = handle:read("*a")
@@ -12,7 +11,6 @@ local function get_duration(file)
     return tonumber(result)
 end
 
--- Function to initialize the drums table synchronously
 local function init_drums()
     local files = norns.system_glob(audio_directory .. "*.wav")
     for _, file in ipairs(files) do
@@ -23,31 +21,15 @@ local function init_drums()
     end
 end
 
-function sequencer.init(grid)
+function sequencer.init(grid, current_filename)
     if not grid or not grid.all then
         error("Grid not properly initialized")
     end
     sequencer.grid = grid
 
     init_drums()
-
-    sequencer.clock = BeatClock.new()
-    sequencer.beat_position = 0
-    sequencer.bpm = 91
-    sequencer.clock:bpm_change(sequencer.bpm)
-    sequencer.clock.on_step = sequencer.update
-    sequencer.playing = false
-    sequencer.drum_keys = {
-        "606-BD",
-        "606-SD",
-        "606-OH",
-        "606-CH",
-        "606-CY",
-        "ELM-01",
-        "ELM-02",
-        "ELM-03"
-    }
-    sequencer.drum_voice = {1, 2, 3, 3, 3, 4, 4, 4}
+    sequencer.drum_keys = {}
+    sequencer.drum_voice = {}
 
     sequencer.steps = {}
     for y = 1, 8 do
@@ -56,6 +38,15 @@ function sequencer.init(grid)
             sequencer.steps[y][x] = 0
         end
     end
+
+    sequencer.load_steps_from_file(current_filename)
+
+    sequencer.clock = BeatClock.new()
+    sequencer.beat_position = 0
+    sequencer.bpm = 91
+    sequencer.clock:bpm_change(sequencer.bpm)
+    sequencer.clock.on_step = sequencer.update
+    sequencer.playing = false
 
     local start = 0
     for name, drum in pairs(drums) do
@@ -130,10 +121,19 @@ function sequencer.load_steps_from_file(filename)
         local row = 1
         for line in string.gmatch(content, "([^\n]+)") do
             local col = 1
-            for step in string.gmatch(line, "%d") do
-                sequencer.set_step(col, row, tonumber(step))
+            local keys = {}
+            for step in string.gmatch(line, "%S+") do
+                if col <= 16 then
+                    sequencer.set_step(col, row, tonumber(step))
+                elseif col == 17 then
+                    keys.drum_key = step
+                elseif col == 18 then
+                    keys.drum_voice = tonumber(step)
+                end
                 col = col + 1
             end
+            sequencer.drum_keys[row] = keys.drum_key
+            sequencer.drum_voice[row] = keys.drum_voice
             row = row + 1
         end
     else
@@ -174,7 +174,8 @@ function sequencer.save_steps_to_file(filename)
                 local step = sequencer.get_step(j, i)
                 line = line .. step .. " "
             end
-            file:write(line:sub(1, -2) .. "\n")
+            line = line .. sequencer.drum_keys[i] .. " " .. sequencer.drum_voice[i]
+            file:write(line .. "\n")
         end
         file:close()
         print("Steps saved to file: " .. filename)

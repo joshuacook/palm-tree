@@ -1,4 +1,4 @@
-function page_1(screen, bpm, output_level)
+function page_main(screen, bpm, output_level)
     screen.clear()
     screen.move(8, 8)
     screen.text("BPM: " .. bpm)
@@ -7,7 +7,20 @@ function page_1(screen, bpm, output_level)
     screen.update()
 end
 
-function page_2(screen, current_filename)
+function page_sampler(screen, sequencer, selected_drum)
+    screen.clear()
+    screen.move(8, 8)
+    
+    for i = 1, #sequencer.drum_keys do
+        local y_pos = 8 + (i - 1) * 8
+        screen.move(8, y_pos)
+        screen.text((i == selected_drum and ">" or " ") .. i .. " " .. sequencer.drum_keys[i] .. " " .. sequencer.drum_voice[i])
+    end
+
+    screen.update()
+end
+
+function page_load(screen, current_filename)
     screen.clear()
     screen.move(64, 32)
     screen.text_center("Load Screen")
@@ -18,7 +31,7 @@ function page_2(screen, current_filename)
     screen.update()
 end
 
-function page_3(screen, current_filename)
+function page_save(screen, current_filename)
     screen.clear()
     screen.move(64, 32)
     screen.text_center("Save Screen")
@@ -28,4 +41,3 @@ function page_3(screen, current_filename)
     screen.text_center("Press K2 to Save")
     screen.update()
 end
-
