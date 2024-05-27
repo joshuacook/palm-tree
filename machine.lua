@@ -6,7 +6,7 @@ local my_grid = grid.connect()
 local page = 1
 local current_filename = "steps-001.txt"
 local output_position = 7
-params:set("output_level", 6.00)
+params:set("output_level", -2.00)
 
 function init()
     audio.level_cut(1.0)
@@ -16,8 +16,7 @@ function init()
     softcut.buffer(3, 1)
     softcut.buffer_clear()
 
-    drum_players = dofile(_path.dust .. "code/palm-tree/lib/drum_players.lua")
-    sequencer.init(drum_players, my_grid)
+    sequencer.init(my_grid)
     sequencer.load_steps_from_file(current_filename)
 
     interface = hid.connect()
