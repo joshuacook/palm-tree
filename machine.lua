@@ -10,10 +10,6 @@ params:set("output_level", -2.00)
 
 function init()
     audio.level_cut(1.0)
-
-    softcut.buffer(1, 1)
-    softcut.buffer(2, 1)
-    softcut.buffer(3, 1)
     softcut.buffer_clear()
 
     sequencer.init(my_grid)

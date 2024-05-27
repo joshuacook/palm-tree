@@ -1,0 +1,1 @@
+for _, file in ipairs(norns.system_glob(_path.dust.."audio/palm/*.wav")) do local filename=file:match("([^/]+)%.wav$") norns.system_cmd("soxi -D " .. file, function(duration) print("Filename: " .. filename .. " Duration: " .. duration) end) end
