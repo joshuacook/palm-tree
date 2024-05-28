@@ -58,12 +58,12 @@ end
 
 -- NORNS INTERFACE
 
-function enc(n, d)
-    if n == 1 then
-        page = util.clamp(page + d, 1, 3)
-    elseif n == 2 then
+function enc(current_encoder, value)
+    if current_encoder == 1 then
+        page = util.clamp(page + value, 1, 3)
+    elseif current_encoder == 2 then
         if page == 1 then
-            sequencer.bpm = sequencer.bpm + d
+            sequencer.bpm = sequencer.bpm + value
             sequencer.clock:bpm_change(sequencer.bpm)
         elseif page == 2 then
             local current_key_index = nil
@@ -74,72 +74,81 @@ function enc(n, d)
                 end
             end
             if current_key_index then
-                local new_key_index = util.clamp(current_key_index + d, 1, #drum_keys)
+                local new_key_index = util.clamp(current_key_index + value, 1, #drum_keys)
                 sequencer.drum_keys[selected_drum] = drum_keys[new_key_index]
             end
         elseif page == 3 then
             local base, num, ext = string.match(current_filename, "(steps%-)(%d+)(%.txt)")
-            num = util.clamp(tonumber(num) + d, 1, 999)
+            num = util.clamp(tonumber(num) + value, 1, 999)
             current_filename = base .. string.format("%03d", num) .. ext
         end
-    elseif n == 3 then
+    elseif current_encoder == 3 then
         if page == 1 then
             local current_output_level = params:get("output_level")
-            params:set("output_level", util.clamp(current_output_level + d, -60.00, 60.00))
+            params:set("output_level", util.clamp(current_output_level + value, -60.00, 60.00))
+        elseif page == 2 then
+            selected_drum = util.clamp(selected_drum + value, 1, #sequencer.drum_keys)
+            sequencer.set_selected_drum(selected_drum)
         end
     end
     redraw()
 end
 
-function key(n, z)
-    if z == 1 then
-        if confirmation_mode then
-            if n == 2 then
-                if confirmation_mode == "load" then
+function key(current_key, value)
+    print(current_key, value, page, confirmation_mode)
+    if confirmation_mode then
+        if value == 1 then
+            if confirmation_mode == "load" then
+                if current_key == 2 then
                     sequencer.load_steps_from_file(current_filename)
                     sequencer.grid_redraw()
-                elseif confirmation_mode == "save" then
+                elseif current_key == 3 then
+                    -- Cancel the action
+                end
+            elseif confirmation_mode == "save" then
+                if current_key == 2 then
                     sequencer.save_steps_to_file(current_filename)
-                end
-                confirmation_mode = nil
-            elseif n == 3 then
-                confirmation_mode = nil
-            end
-            redraw()
-        else
-            if n == 2 then
-                if page == 1 then
-                    if sequencer.playing then
-                        sequencer.clock:stop()
-                        sequencer.playing = false
-                    else
-                        sequencer.clock:start()
-                        sequencer.playing = true
-                    end
-                elseif page == 2 then
-                    selected_drum = (selected_drum - 2) % #sequencer.drum_keys + 1
-                    sequencer.set_selected_drum(selected_drum)
-                elseif page == 3 then
-                    confirmation_mode = "load"
-                end
-            elseif n == 3 then
-                if page == 1 then
-                    if sequencer.current_page == 1 then
-                        sequencer.set_selected_drum(9)
-                    else
-                        sequencer.set_selected_drum(1)
-                    end
-                elseif page == 2 then
-                    selected_drum = selected_drum % #sequencer.drum_keys + 1
-                    sequencer.set_selected_drum(selected_drum)
-                elseif page == 3 then
-                    confirmation_mode = "save"
+                elseif current_key == 3 then
+                    -- Cancel the action
                 end
             end
-            redraw()
+            confirmation_mode = nil
+            -- Ensure we return to the load/save screen
+            if page == 3 then
+                redraw()
+            end
+        end
+    else
+        if page == 1 then
+            if current_key == 2 and value == 1 then
+                if sequencer.playing then
+                    sequencer.clock:stop()
+                    sequencer.playing = false
+                else
+                    sequencer.clock:start()
+                    sequencer.playing = true
+                end
+            elseif current_key == 3 and value == 1 then
+                if sequencer.current_page == 1 then
+                    sequencer.set_selected_drum(9)
+                else
+                    sequencer.set_selected_drum(1)
+                end
+            end
+        elseif page == 3 then
+            if current_key == 2 and value == 1 then
+                confirmation_mode = "load"
+            elseif current_key == 3 and value == 1 then
+                confirmation_mode = "save"
+            end
         end
     end
+    print(current_key, value, page, confirmation_mode)
+    redraw()
 end
+
+
+
 
 -- NORNS SCREEN
 

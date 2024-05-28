@@ -5,6 +5,7 @@
     local drums = {}
     local N_PLAYERS = 16
     local DRUMS_PER_PAGE = 8
+    local fade_time = 0.01
 
     local function get_duration(file)
         local handle = io.popen("soxi -D " .. file)
@@ -81,8 +82,8 @@
         softcut.loop(voice, 0)
         softcut.enable(voice, 1)
         softcut.rate(voice, 1)
-        softcut.fade_time(voice, 0.01)
-        softcut.level_slew_time(voice, 0.01)
+        softcut.fade_time(voice, fade_time)
+        softcut.level_slew_time(voice, fade_time)
         print("Voice configured:", voice)
     end
 
@@ -163,7 +164,7 @@
         softcut.play(voice, 0)
         softcut.level(voice, value * 0.5)
         softcut.loop_start(voice, start)
-        softcut.loop_end(voice, start + duration - 0.01)
+        softcut.loop_end(voice, start + duration - fade_time)
         softcut.position(voice, start)
         softcut.play(voice, 1)
     end
