@@ -117,13 +117,21 @@ function key(n, z)
                         sequencer.playing = true
                     end
                 elseif page == 2 then
-                    selected_drum = util.clamp(selected_drum - 1, 1, #sequencer.drum_keys)
+                    selected_drum = (selected_drum - 2) % #sequencer.drum_keys + 1
+                    sequencer.set_selected_drum(selected_drum)
                 elseif page == 3 then
                     confirmation_mode = "load"
                 end
             elseif n == 3 then
-                if page == 2 then
-                    selected_drum = util.clamp(selected_drum + 1, 1, #sequencer.drum_keys)
+                if page == 1 then
+                    if sequencer.current_page == 1 then
+                        sequencer.set_selected_drum(9)
+                    else
+                        sequencer.set_selected_drum(1)
+                    end
+                elseif page == 2 then
+                    selected_drum = selected_drum % #sequencer.drum_keys + 1
+                    sequencer.set_selected_drum(selected_drum)
                 elseif page == 3 then
                     confirmation_mode = "save"
                 end
@@ -142,7 +150,7 @@ function redraw()
     else
         if page == 1 then
             local output_level = params:get("output_level")
-            page_main(screen, sequencer.bpm, output_level)
+            page_main(screen, sequencer.bpm, output_level, sequencer.current_page)
         elseif page == 2 then
             page_sampler(screen, sequencer, selected_drum)
         elseif page == 3 then
@@ -155,8 +163,8 @@ end
 -- GRID INTERFACE
 
 function my_grid.key(x, y, z)
-    if z == 1 then 
-        sequencer.set_step(x, y, (sequencer.steps[y][x] + 1) % 3)
+    if z == 1 then
+        sequencer.step_cycle(x, y)
     end
     sequencer.grid_redraw()
 end
