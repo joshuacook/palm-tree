@@ -12,6 +12,8 @@ params:set("output_level", -2.00)
 local selected_drum = 1
 local drum_keys = {}
 
+local confirmation_mode = nil
+
 local function load_drum_keys()
     local files = norns.system_glob(audio_directory .. "*.wav")
     for _, file in ipairs(files) do
@@ -58,7 +60,7 @@ end
 
 function enc(n, d)
     if n == 1 then
-        page = util.clamp(page + d, 1, 4)
+        page = util.clamp(page + d, 1, 3)
     elseif n == 2 then
         if page == 1 then
             sequencer.bpm = sequencer.bpm + d
@@ -75,7 +77,7 @@ function enc(n, d)
                 local new_key_index = util.clamp(current_key_index + d, 1, #drum_keys)
                 sequencer.drum_keys[selected_drum] = drum_keys[new_key_index]
             end
-        elseif page == 3 or page == 4 then
+        elseif page == 3 then
             local base, num, ext = string.match(current_filename, "(steps%-)(%d+)(%.txt)")
             num = util.clamp(tonumber(num) + d, 1, 999)
             current_filename = base .. string.format("%03d", num) .. ext
@@ -90,26 +92,42 @@ function enc(n, d)
 end
 
 function key(n, z)
-    if n == 2 and z == 1 then
-        if page == 1 then
-            if sequencer.playing then
-                sequencer.clock:stop()
-                sequencer.playing = false
-            else
-                sequencer.clock:start()
-                sequencer.playing = true
+    if z == 1 then
+        if confirmation_mode then
+            if n == 2 then
+                if confirmation_mode == "load" then
+                    sequencer.load_steps_from_file(current_filename)
+                    sequencer.grid_redraw()
+                elseif confirmation_mode == "save" then
+                    sequencer.save_steps_to_file(current_filename)
+                end
+                confirmation_mode = nil
+            elseif n == 3 then
+                confirmation_mode = nil
             end
-        elseif page == 2 then
-            selected_drum = util.clamp(selected_drum - 1, 1, #sequencer.drum_keys)
             redraw()
-        elseif page == 3 then
-            sequencer.load_steps_from_file(current_filename)
-        elseif page == 4 then
-            sequencer.save_steps_to_file(current_filename)
-        end
-    elseif n == 3 and z == 1 then
-        if page == 2 then
-            selected_drum = util.clamp(selected_drum + 1, 1, #sequencer.drum_keys)
+        else
+            if n == 2 then
+                if page == 1 then
+                    if sequencer.playing then
+                        sequencer.clock:stop()
+                        sequencer.playing = false
+                    else
+                        sequencer.clock:start()
+                        sequencer.playing = true
+                    end
+                elseif page == 2 then
+                    selected_drum = util.clamp(selected_drum - 1, 1, #sequencer.drum_keys)
+                elseif page == 3 then
+                    confirmation_mode = "load"
+                end
+            elseif n == 3 then
+                if page == 2 then
+                    selected_drum = util.clamp(selected_drum + 1, 1, #sequencer.drum_keys)
+                elseif page == 3 then
+                    confirmation_mode = "save"
+                end
+            end
             redraw()
         end
     end
@@ -119,15 +137,17 @@ end
 
 function redraw()
     screen.clear()
-    if page == 1 then
-        local output_level = params:get("output_level")
-        page_main(screen, sequencer.bpm, output_level)
-    elseif page == 2 then
-        page_sampler(screen, sequencer, selected_drum)
-    elseif page == 3 then
-        page_load(screen, current_filename)
-    elseif page == 4 then
-        page_save(screen, current_filename)
+    if confirmation_mode then
+        confirmation_screen(screen, confirmation_mode)
+    else
+        if page == 1 then
+            local output_level = params:get("output_level")
+            page_main(screen, sequencer.bpm, output_level)
+        elseif page == 2 then
+            page_sampler(screen, sequencer, selected_drum)
+        elseif page == 3 then
+            page_load_and_save(screen, current_filename)
+        end
     end
     screen.update()
 end
