@@ -88,7 +88,8 @@ function sequencer.grid_redraw()
         for j = 1, 8 do 
             local step_value = sequencer.steps[j][i]
             if step_value > 0 then
-                sequencer.grid:led(i, j, step_value * 5)
+                local intensity = step_value * 7
+                sequencer.grid:led(i, j, intensity)
             end
         end
     end
@@ -143,7 +144,7 @@ function sequencer.play_voice(voice, drum_index, value)
     local start = drum.start
     local duration = drum.duration
     softcut.play(voice, 0)
-    softcut.level(voice, value * 0.33)
+    softcut.level(voice, value * 0.5)
     softcut.loop_start(voice, start)
     softcut.loop_end(voice, start + duration - 0.01)
     softcut.position(voice, start)

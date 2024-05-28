@@ -136,7 +136,7 @@ end
 
 function my_grid.key(x, y, z)
     if z == 1 then 
-        sequencer.set_step(x, y, (sequencer.steps[y][x] + 1) % 4)
+        sequencer.set_step(x, y, (sequencer.steps[y][x] + 1) % 3)
     end
     sequencer.grid_redraw()
 end
