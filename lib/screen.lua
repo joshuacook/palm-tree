@@ -1,10 +1,16 @@
-function page_main(screen, bpm, output_level, current_grid_page)
+function page_main(screen, sequencer, output_level)
+    local bpm = sequencer.song.bpm
+    local title = sequencer.song.title
+    local current_grid_page = sequencer.current_page
+
     screen.clear()
     screen.move(8, 8)
-    screen.text("BPM: " .. bpm)
+    screen.text("Song: " .. title)
     screen.move(8, 16)
-    screen.text("Output Level: " .. (output_level == -math.huge and "-inf" or string.format("%.2f", output_level)))
+    screen.text("BPM: " .. bpm)
     screen.move(8, 24)
+    screen.text("Output Level: " .. (output_level == -math.huge and "-inf" or string.format("%.2f", output_level)))
+    screen.move(8, 32)
     screen.text("Grid: " .. current_grid_page)
     screen.move(8, 52)
     screen.text("K2: Toggle Play")
