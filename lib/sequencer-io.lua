@@ -9,6 +9,9 @@ function load_song(sequencer, filename)
     if file then
         local content = file:read("*a")
         file:close()
+        
+        sequencer.steps = {}
+        sequencer.drum_keys = {}
 
         local song = parse_song(content)
         sequencer.song = song
