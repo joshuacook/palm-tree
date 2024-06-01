@@ -1,3 +1,5 @@
+--hid.lua
+
 my_hid = {}
 
 function my_hid.init(sequencer, interface, params)

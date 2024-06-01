@@ -8,14 +8,14 @@ function key_confirmation_mode(
     if value == 1 then
         if confirmation_mode == "load" then
             if key == 2 then
-                sequencer.load_song(current_filename)
+                sequencer.load_song(sequencer.song.filename)
                 sequencer.grid_redraw()
             elseif key == 3 then
                 -- Cancel the action
             end
         elseif confirmation_mode == "save" then
             if key == 2 then
-                sequencer.save_song(current_filename)
+                sequencer.save_song()
             elseif key == 3 then
                 -- Cancel the action
             end
@@ -47,7 +47,7 @@ function key_main(key, value, sequencer)
             sequencer.playing = true
         end
     elseif key == 3 and value == 1 then
-        if sequencer.current_page == 1 then
+        if sequencer.current_grid_page == 1 then
             sequencer.set_selected_drum(9)
         else
             sequencer.set_selected_drum(1)
