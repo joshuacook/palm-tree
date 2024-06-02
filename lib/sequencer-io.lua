@@ -12,6 +12,7 @@ function load_song(sequencer, filename)
         
         sequencer.steps = {}
         sequencer.drum_keys = {}
+        sequencer.drum_levels = {}
 
         local song = parse_song(content)
         sequencer.song = song
@@ -37,6 +38,8 @@ function parse_patterns(patterns)
                     pattern[row][col] = tonumber(step)
                 elseif col == 17 then
                     pattern[row].drum_key = step
+                elseif col == 18 then
+                    pattern[row].drum_level = tonumber(step)
                 end
                 col = col + 1
             end
@@ -91,7 +94,6 @@ function parse_song(content)
     return song
 end
 
-
 function save_song(sequencer)
     local filename = sequencer.song.filename
     local full_path = PATTERNS_DIRECTORY .. filename
@@ -135,7 +137,8 @@ function serialize_patterns(patterns)
                 end
                 pattern_str = pattern_str .. row[col] .. " "
             end
-            pattern_str = pattern_str .. (row.drum_key or "default_key") .. "\n"
+            pattern_str = pattern_str .. (row.drum_key or "default_key") .. " "
+            pattern_str = pattern_str .. (row.drum_level or "0") .. "\n"
         end
         table.insert(serialized_patterns, pattern_str)
     end

@@ -42,7 +42,6 @@ function enc_sampler(encoder, value, sequencer)
             end
         end
 
-        
         if current_key_index then
             local n_samples = #sequencer.sample_keys
             local new_key_index = util.clamp(current_key_index + value, 1, n_samples)

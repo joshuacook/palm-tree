@@ -37,34 +37,68 @@ end
 
 function keyboard.code(code, value)
     if value == 1 then
-        if code == "KPENTER" then
-            if typing_number then
-                typing_number = false
-                my_number = tonumber(my_number)
-                sequencer.switch_pattern(my_number)
-                my_number = nil
+        if page == 2 then
+            if code == "KPENTER" then
+                if typing_number then
+                    typing_number = false
+                    local new_level = tonumber(my_number)
+                    local selected_drum = sequencer.selected_drum
+                    if new_level then
+                        sequencer.drum_levels[selected_drum] = new_level
+                    end
+                    my_number = nil
+                    redraw()
+                end
+            elseif code == "KPMINUS" then
+                if typing_number and #my_number > 0 then
+                    my_number = my_number:sub(1, -2)
+                    redraw()
+                end
+            elseif code == "KPDOT" then
+                if typing_number and not my_number:find("%.") then
+                    my_number = my_number .. "."
+                    redraw()
+                end
+            elseif code:match("^KP%d$") then
+                local digit = code:sub(3)
+                if typing_number then
+                    my_number = my_number .. digit
+                else
+                    my_number = digit
+                    typing_number = true
+                end
                 redraw()
             end
-        elseif code == "KPMINUS" then
-            if typing_number and #my_number > 0 then
-                my_number = my_number:sub(1, -2)
+        else
+            if code == "KPENTER" then
+                if typing_number then
+                    typing_number = false
+                    my_number = tonumber(my_number)
+                    sequencer.switch_pattern(my_number)
+                    my_number = nil
+                    redraw()
+                end
+            elseif code == "KPMINUS" then
+                if typing_number and #my_number > 0 then
+                    my_number = my_number:sub(1, -2)
+                    redraw()
+                end
+            elseif code == "NUMLOCK" then
+                if typing_number then
+                    typing_number = false
+                    my_number = nil
+                    redraw()
+                end
+            elseif code:match("^KP%d$") then
+                local digit = code:sub(3)
+                if typing_number then
+                    my_number = my_number .. digit
+                else
+                    my_number = digit
+                    typing_number = true
+                end
                 redraw()
             end
-        elseif code == "NUMLOCK" then
-            if typing_number then
-                typing_number = false
-                my_number = nil
-                redraw()
-            end
-        elseif code:match("^KP%d$") then
-            local digit = code:sub(3)
-            if typing_number then
-                my_number = my_number .. digit
-            else
-                my_number = digit
-                typing_number = true
-            end
-            redraw()
         end
     end
 end
@@ -73,8 +107,8 @@ function check_param_change()
     local current_output_level = params:get("output_level")
 
     if current_output_level ~= prev_output_level then
-      prev_output_level = current_output_level
-      redraw()
+        prev_output_level = current_output_level
+        redraw()
     end
 end
 

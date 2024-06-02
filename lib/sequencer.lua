@@ -1,5 +1,3 @@
--- sequencer.lua
-
 include("lib/sequencer-io")
 
 local N_PLAYERS = 16
@@ -71,19 +69,20 @@ function sequencer.play(beat_position)
     for y = 1, N_PLAYERS do
         local step_value = sequencer.steps[y][beat_position]
         if step_value > 0 then
-            sequencer.play_voice(voice, y, step_value)
+            local drum_level = sequencer.drum_levels[y] or 1 -- Default level is 1 if not specified
+            sequencer.play_voice(voice, y, step_value, drum_level)
             voice = voice + 1
         end
     end
 end
 
-function sequencer.play_voice(voice, drum_index, value)
+function sequencer.play_voice(voice, drum_index, value, level)
     local drum_key = sequencer.drum_keys[drum_index]
     local drum = sequencer.sample_library[drum_key]
     local start = drum.start
     local duration = drum.duration
     softcut.play(voice, 0)
-    softcut.level(voice, value * 0.5)
+    softcut.level(voice, value * 0.5 * level) -- Adjust volume by drum level
     softcut.loop_start(voice, start)
     softcut.loop_end(voice, start + duration - FADE_TIME)
     softcut.position(voice, start)
@@ -130,6 +129,7 @@ function sequencer.switch_pattern(pattern_index)
         for y, row in ipairs(sequencer.steps) do
             sequencer.song.patterns[sequencer.active_pattern_index][y] = row
             sequencer.song.patterns[sequencer.active_pattern_index][y].drum_key = sequencer.drum_keys[y]
+            sequencer.song.patterns[sequencer.active_pattern_index][y].drum_level = sequencer.drum_levels[y]
         end
     end
     
@@ -144,12 +144,13 @@ function sequencer.switch_pattern(pattern_index)
     sequencer.steps = sequencer.song.patterns[sequencer.active_pattern_index]
 
     sequencer.drum_keys = {}
+    sequencer.drum_levels = {}
     for y, row in ipairs(sequencer.steps) do
         sequencer.drum_keys[y] = row.drum_key
+        sequencer.drum_levels[y] = row.drum_level
     end
     sequencer.grid_redraw()
 end
-
 
 function sequencer.update()
     sequencer.beat_position = sequencer.beat_position % 16 + 1
@@ -166,6 +167,7 @@ function sequencer.create_empty_pattern()
             new_pattern[y][x] = 0
         end
         new_pattern[y].drum_key = sequencer.sample_keys[y] or "default_key"
+        new_pattern[y].drum_level = 1 -- Default level is 1
     end
     return new_pattern
 end

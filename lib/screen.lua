@@ -37,8 +37,9 @@ function page_sampler(screen, sequencer)
         local x_pos = 8 + column * column_width
         local y_pos = 8 + row * 8
         local drum_key = sequencer.drum_keys[i]
+        local drum_level = sequencer.drum_levels[i] or 1 -- Default level is 1 if not specified
         screen.move(x_pos, y_pos)
-        screen.text((i == selected_drum and ">" or " ") .. " " .. drum_key)
+        screen.text((i == selected_drum and ">" or " ") .. " " .. drum_key .. " " .. drum_level .. "")
     end
 
     screen.update()
