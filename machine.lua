@@ -1,10 +1,13 @@
 -- machine.lua
 
+include("lib/buffer")
+include('lib/diagnostic')
 include('lib/encoders')
 my_hid = include('lib/hid')
 include('lib/keys')
 include('lib/screen')
 sequencer = include('lib/sequencer')
+include("lib/voice")
 
 local my_grid = grid.connect()
 
@@ -15,14 +18,10 @@ local typing_number = false
 
 function init()
     audio.level_cut(1.0)
-    softcut.buffer_clear()
 
-    interface = hid.connect()
-    if interface ~= nil then
-        my_hid.init(sequencer, interface, params)
-    end
-
-    sequencer.init(my_grid)
+    voices_init()
+    sample_library, sample_keys = buffer_init()
+    sequencer.init(my_grid, sample_library, sample_keys)
 
     params:set("output_level", tonumber(sequencer.song.output_level))
     prev_output_level = params:get("output_level")
@@ -96,7 +95,7 @@ function key(current_key, value)
     if confirmation_mode then
         confirmation_mode = key_confirmation_mode(current_key, value, sequencer, confirmation_mode, redraw)
     else
-        if page == 1 then
+        if page == 1 or page == 2 then
             key_main(current_key, value, sequencer)
         elseif page == 3 then
             confirmation_mode = key_load_and_save(current_key, value)

@@ -15,7 +15,6 @@ function my_hid.init(sequencer, interface, params)
 end
 
 function my_hid.compute_output_level(code)
-    print("output level code: " .. code)
     if code == 712 then
         my_hid.output_level_position = my_hid.output_level_position - 1
     elseif code == 713 then
@@ -31,7 +30,6 @@ function my_hid.compute_output_level(code)
 end
 
 function my_hid.event_handler(type, code, val)
-    print(type, code, val)
     if code == 312 then
         my_hid.sequencer.clock:stop()
         my_hid.sequencer.playing = false

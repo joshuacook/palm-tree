@@ -1,7 +1,5 @@
 -- sequencer.lua
 
-include("lib/buffer")
-include("lib/voice")
 include("lib/sequencer-io")
 
 local N_PLAYERS = 16
@@ -11,15 +9,14 @@ local sequencer = {}
 local BeatClock = require 'beatclock'
 local FADE_TIME = 0.01
 
-function sequencer.init(grid)
+function sequencer.init(grid, sample_library, sample_keys)
     if not grid or not grid.all then
         error("Grid not properly initialized")
     end
     sequencer.grid = grid
+    sequencer.sample_library = sample_library
+    sequencer.sample_keys = sample_keys
 
-    configure_voices()
-
-    sequencer.sample_library, sequencer.sample_keys = init_buffer()
     sequencer.clock = BeatClock.new()
 
     sequencer.current_grid_page = 1
@@ -66,7 +63,6 @@ end
 
 function sequencer.load_song(filename)
     load_song(sequencer, filename)
-    print("active pattern: " .. sequencer.active_pattern_index)
     sequencer.switch_pattern(sequencer.active_pattern_index)
 end
 
@@ -95,7 +91,6 @@ function sequencer.play_voice(voice, drum_index, value)
 end
 
 function sequencer.save_song()
-    print("active pattern: " .. sequencer.active_pattern_index)
     sequencer.switch_pattern(sequencer.active_pattern_index)
     save_song(sequencer)
 end

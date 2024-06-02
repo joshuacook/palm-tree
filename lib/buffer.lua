@@ -1,4 +1,4 @@
-local AUDIO_DIRECTORY = _path.dust .. "audio/palm/"
+local AUDIO_DIRECTORY = norns.state.path .. "audio/"
 
 
 local function get_duration(file)
@@ -8,7 +8,7 @@ local function get_duration(file)
     return tonumber(result)
 end
 
-function init_buffer()
+function buffer_init()
     local sample_library = {}
     local sample_keys = {}
     local files = norns.system_glob(AUDIO_DIRECTORY .. "*.wav")
@@ -20,7 +20,6 @@ function init_buffer()
         load_buffer(file, start)
         sample_library[filename] = { file = file, duration = duration, start = start }
         start = start + duration
-        -- print("Loaded drum:", filename, "Start:", start, "Duration:", duration)
     end
 
     

@@ -29,7 +29,7 @@ function page_sampler(screen, sequencer)
     screen.clear()
     screen.font_face(21)
 
-    local column_width = 64
+    local column_width = 56
     local selected_drum = sequencer.selected_drum
     for i = 1, #sequencer.steps do
         local column = math.floor((i - 1) / 8)
@@ -38,7 +38,7 @@ function page_sampler(screen, sequencer)
         local y_pos = 8 + row * 8
         local drum_key = sequencer.drum_keys[i]
         screen.move(x_pos, y_pos)
-        screen.text((i == selected_drum and ">" or " ") .. string.format("%02d", i) .. " " .. drum_key)
+        screen.text((i == selected_drum and ">" or " ") .. " " .. drum_key)
     end
 
     screen.update()

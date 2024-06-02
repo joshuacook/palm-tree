@@ -1,6 +1,7 @@
 local FADE_TIME = 0.01
 
-function configure_voices()
+function voices_init()
+    softcut.buffer_clear()
     for voice = 1, 6 do
         configure_voice(voice)
     end

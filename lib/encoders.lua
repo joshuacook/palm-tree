@@ -11,7 +11,7 @@ function enc_load_and_save(encoder, value, sequencer)
     local current_filename = sequencer.song.filename
     if encoder == 2 then
         local base, num, ext = string.match(current_filename, "(song%-)(%d+)(%.yaml)")
-        num = util.clamp(tonumber(num) + value, 1, 999)
+        num = (tonumber(num) + value - 1) % 999 + 1
         current_filename = base .. string.format("%03d", num) .. ext
         sequencer.song.filename = current_filename
     end
@@ -57,7 +57,7 @@ function enc_sampler(encoder, value, sequencer)
         end
     elseif encoder == 3 then
         local selected_drum = sequencer.selected_drum
-        selected_drum = util.clamp(selected_drum + value, 1, sequencer.n_players)
+        selected_drum = (selected_drum + value - 1) % sequencer.n_players + 1
         sequencer.set_selected_drum(selected_drum)
     end
 end

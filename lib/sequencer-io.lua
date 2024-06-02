@@ -15,10 +15,6 @@ function load_song(sequencer, filename)
 
         local song = parse_song(content)
         sequencer.song = song
-        print("title: " .. song.title)
-        print("bpm: " .. song.bpm)
-        print("output_level: ", song.output_level)
-        print("patterns: " .. #song.patterns)
         sequencer.song.filename = filename
         sequencer.song.patterns = parse_patterns(song.patterns)
 
