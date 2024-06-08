@@ -43,6 +43,7 @@ function key_main(key, value, sequencer)
             sequencer.clock:stop()
             sequencer.playing = false
         else
+            sequencer.beat_position = 0
             sequencer.clock:start()
             sequencer.playing = true
         end
