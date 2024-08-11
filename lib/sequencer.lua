@@ -150,7 +150,7 @@ local PLAYERS_PER_PAGE = 8
 
 local sequencer = {}
 local BeatClock = require 'beatclock'
-local FADE_TIME = 0.01
+local FADE_TIME = 0.005
 
 function sequencer.init(grid, sample_library, sample_keys)
     if not grid or not grid.all then
