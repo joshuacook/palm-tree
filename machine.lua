@@ -1,20 +1,35 @@
 -- machine.lua
 
 include("lib/buffer")
-include('lib/diagnostic')
-include('lib/encoders')
+include('lib/interface')
 my_hid = include('lib/hid')
-include('lib/keys')
 include('lib/screen')
 sequencer = include('lib/sequencer')
-include("lib/voice")
 
 local my_grid = grid.connect()
+print("Grid connected:", my_grid.device)
 
 local page = 1
 local confirmation_mode = nil
 local my_number = nil
 local typing_number = false
+local FADE_TIME = 0.01
+
+function voices_init()
+    softcut.buffer_clear()
+    for voice = 1, 6 do
+        configure_voice(voice)
+    end
+end
+
+function configure_voice(voice)
+    softcut.buffer(voice, 1)
+    softcut.loop(voice, 0)
+    softcut.enable(voice, 1)
+    softcut.rate(voice, 1)
+    softcut.fade_time(voice, FADE_TIME)
+    softcut.level_slew_time(voice, FADE_TIME)
+end
 
 function init()
     audio.level_cut(1.0)
@@ -31,6 +46,7 @@ function init()
         time = 0.2,
         count = -1
     }:start()
+
 
     redraw()
 end

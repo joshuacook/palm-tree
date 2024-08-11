@@ -1,4 +1,4 @@
--- screen.lua
+-- lib/screen.lua
 
 function page_main(screen, sequencer, output_level, my_number)
     local bpm = sequencer.song.bpm
@@ -16,10 +16,10 @@ function page_main(screen, sequencer, output_level, my_number)
     screen.text("Output Level: " .. (output_level == -math.huge and "-inf" or string.format("%.2f", output_level)))
     screen.move(8, 32)
     screen.text("Grid: " .. current_grid_page)
-    screen.move(40, 32)
+    screen.move(48, 32)
     screen.text("Active: " .. (my_number or sequencer.active_pattern_index))
     screen.move(8, 40)
-    screen.text("MIDI Target: " .. sequencer.midi_device_names[sequencer.target_device])
+    -- screen.text("MIDI Target: " .. sequencer.midi_device_names[sequencer.target_device])
     screen.move(8, 52)
     screen.text("K2: Toggle Play")
     screen.move(8, 60)

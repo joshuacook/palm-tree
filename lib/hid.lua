@@ -1,4 +1,4 @@
---hid.lua
+-- lib/hid.lua
 
 my_hid = {}
 

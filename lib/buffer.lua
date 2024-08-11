@@ -1,5 +1,6 @@
-local AUDIO_DIRECTORY = norns.state.path .. "audio/"
+-- lib/buffer.lua
 
+local AUDIO_DIRECTORY = norns.state.path .. "audio/"
 
 local function get_duration(file)
     local handle = io.popen("soxi -D " .. file)
