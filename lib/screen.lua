@@ -56,6 +56,35 @@ function page_load_and_save(screen, sequencer)
     screen.update()
 end
 
+function page_parameters(screen, selected_param, params_list)
+    screen.clear()
+    screen.font_face(1)
+    screen.font_size(8)
+    screen.level(15)
+    
+    screen.move(64, 10)
+    screen.text_center("Parameters")
+    
+    for i, param_name in ipairs(params_list) do
+        screen.move(10, 20 + i * 10)
+        if i == selected_param then
+            screen.level(15)
+            screen.text("> " .. param_name .. ": " .. string.format("%.3f", params:get(param_name)))
+        else
+            screen.level(5)
+            screen.text("  " .. param_name .. ": " .. string.format("%.3f", params:get(param_name)))
+        end
+    end
+    
+    screen.move(10, 60)
+    screen.level(5)
+    screen.text("E2: Select Parameter")
+    screen.move(10, 70)
+    screen.text("E3: Adjust Value")
+    
+    screen.update()
+end
+
 function confirmation_screen(screen, mode)
     screen.clear()
     screen.move(64, 16)

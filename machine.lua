@@ -11,9 +11,11 @@ local page = 1
 local confirmation_mode = nil
 local my_number = nil
 local typing_number = false
-local FADE_TIME = 0.01
 
 local AUDIO_DIRECTORY = norns.state.path .. "audio/"
+
+local selected_param = 1
+local params_list = {"fade_time", "attack_time"}
 
 local function get_duration(file)
     local handle = io.popen("soxi -D " .. file)
@@ -57,16 +59,38 @@ function voices_init()
 end
 
 function configure_voice(voice)
+    local fade_time = params:get("fade_time")
+    local attack_time = params:get("attack_time")
     softcut.buffer(voice, 1)
     softcut.loop(voice, 0)
     softcut.enable(voice, 1)
     softcut.rate(voice, 1)
-    softcut.fade_time(voice, FADE_TIME)
-    softcut.level_slew_time(voice, FADE_TIME)
+    softcut.fade_time(voice, fade_time)
+    softcut.level_slew_time(voice, fade_time)
+    softcut.recpre_slew_time(voice, attack_time)
 end
 
 function init()
     audio.level_cut(1.0)
+    
+    params:add_control("fade_time", "Fade Time", controlspec.new(0.001, 0.5, 'exp', 0.001, 0.01, 's'))
+    params:set("fade_time", 0.01)
+    params:add_control("attack_time", "Attack Time", controlspec.new(0, 1, 'lin', 0.01, 0.01, 's'))
+    params:set("attack_time", 0.01)
+
+    params:set_action("fade_time", function(value)
+        for voice = 1, 6 do
+            softcut.fade_time(voice, value)
+            softcut.level_slew_time(voice, value)
+            softcut.recpre_slew_time(voice, value)
+        end
+    end)
+    
+    params:set_action("attack_time", function(value)
+        for voice = 1, 6 do
+            softcut.recpre_slew_time(voice, value)
+        end
+    end)
 
     voices_init()
     sample_library, sample_keys = buffer_init()
@@ -171,6 +195,12 @@ function enc(current_encoder, value)
         enc_sampler(current_encoder, value, sequencer)
     elseif page == 3 then
         enc_load_and_save(current_encoder, value, sequencer)
+    elseif page == 4 then
+        if current_encoder == 2 then
+            selected_param = util.clamp(selected_param + value, 1, #params_list)
+        elseif current_encoder == 3 then
+            params:delta(params_list[selected_param], value)
+        end
     end
     redraw()
 end
@@ -200,6 +230,8 @@ function redraw()
             page_sampler(screen, sequencer)
         elseif page == 3 then
             page_load_and_save(screen, sequencer)
+        elseif page == 4 then
+            page_parameters(screen, selected_param, params_list)
         end
     end
     screen.update()

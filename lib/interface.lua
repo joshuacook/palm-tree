@@ -4,7 +4,7 @@ my_hid = {}
 
 function enc_global(encoder, value, page)
     if encoder == 1 then
-        page = util.clamp(page + value, 1, 3)
+        page = util.clamp(page + value, 1, 4)
     end
     return page
 end
