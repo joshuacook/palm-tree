@@ -23,12 +23,14 @@ function enc_main(encoder, value, sequencer)
     if encoder == 2 then
         sequencer.song.bpm = util.clamp(sequencer.song.bpm + value, 20, 300)
         sequencer.clock:bpm_change(sequencer.song.bpm)
+        params:set("clock_tempo", sequencer.song.bpm)
     elseif encoder == 3 then
         local current_output_level = params:get("output_level")
         sequencer.song.output_level = util.clamp(current_output_level + value, -60.00, 6.00)
         params:set("output_level", sequencer.song.output_level)
     end
 end
+
 
 function enc_sampler(encoder, value, sequencer)
     if encoder == 2 then
@@ -102,15 +104,17 @@ function key_load_and_save(key, value)
     return nil
 end
 
-function key_main(key, value, sequencer)
+function key_main(key, value, sequencer, midi_out)
     if key == 2 and value == 1 then
         if sequencer.playing then
             sequencer.clock:stop()
             sequencer.playing = false
+            midi_out:stop()
         else
             sequencer.beat_position = 0
             sequencer.clock:start()
             sequencer.playing = true
+            midi_out:start()
         end
     elseif key == 3 and value == 1 then
         if sequencer.current_grid_page == 1 then

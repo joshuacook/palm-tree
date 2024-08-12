@@ -71,6 +71,10 @@ function configure_voice(voice)
 end
 
 function init()
+    midi_out = midi.connect(1)
+    midi_out.channel = 16
+    print("MIDI out connected:", midi_out.device)
+
     audio.level_cut(1.0)
     
     params:add_control("fade_time", "Fade Time", controlspec.new(0.001, 0.5, 'exp', 0.001, 0.01, 's'))
@@ -210,7 +214,7 @@ function key(current_key, value)
         confirmation_mode = key_confirmation_mode(current_key, value, sequencer, confirmation_mode, redraw)
     else
         if page == 1 or page == 2 then
-            key_main(current_key, value, sequencer)
+            key_main(current_key, value, sequencer, midi_out)
         elseif page == 3 then
             confirmation_mode = key_load_and_save(current_key, value)
         end

@@ -1,6 +1,15 @@
 -- lib/sequencer.lua
 
+local N_PLAYERS = 16
+local PLAYERS_PER_PAGE = 8
+local FADE_TIME = 0.005
 local PATTERNS_DIRECTORY = _path.dust .. "code/palm-tree/songs/"
+
+local sequencer = {}
+local BeatClock = require 'beatclock'
+local midi_out = midi.connect(1)
+
+sequencer.next_pattern_index = nil
 
 function load_song(sequencer, filename)
     local full_path = PATTERNS_DIRECTORY .. filename
@@ -145,13 +154,6 @@ function serialize_patterns(patterns)
     return serialized_patterns
 end
 
-local N_PLAYERS = 16
-local PLAYERS_PER_PAGE = 8
-
-local sequencer = {}
-local BeatClock = require 'beatclock'
-local FADE_TIME = 0.005
-
 function sequencer.init(grid, sample_library, sample_keys)
     if not grid or not grid.all then
         error("Grid not properly initialized")
@@ -166,6 +168,8 @@ function sequencer.init(grid, sample_library, sample_keys)
     sequencer.active_pattern_index = 1
 
     sequencer.load_song("song-001.yaml")
+
+    sequencer.apply_pattern_switch(1)
 
     sequencer.beat_position = 0
     sequencer.clock:bpm_change(sequencer.song.bpm)
@@ -270,36 +274,57 @@ function sequencer.step_cycle(x, y)
 end
 
 function sequencer.switch_pattern(pattern_index)
-    if sequencer.steps and #sequencer.steps > 0 then
-        for y, row in ipairs(sequencer.steps) do
-            sequencer.song.patterns[sequencer.active_pattern_index][y] = row
-            sequencer.song.patterns[sequencer.active_pattern_index][y].drum_key = sequencer.drum_keys[y]
-            sequencer.song.patterns[sequencer.active_pattern_index][y].drum_level = sequencer.drum_levels[y]
-        end
-    end
-    
-    if pattern_index <= #sequencer.song.patterns then
-        sequencer.active_pattern_index = pattern_index
-    else
-        local new_pattern = sequencer.create_empty_pattern()
-        sequencer.song.patterns[pattern_index] = new_pattern
-        sequencer.active_pattern_index = pattern_index
-    end
-    
-    sequencer.steps = sequencer.song.patterns[sequencer.active_pattern_index]
+    sequencer.next_pattern_index = pattern_index
 
-    sequencer.drum_keys = {}
-    sequencer.drum_levels = {}
-    for y, row in ipairs(sequencer.steps) do
-        sequencer.drum_keys[y] = row.drum_key
-        sequencer.drum_levels[y] = row.drum_level
+    for channel = 1, 4 do
+        midi_out:program_change(pattern_index - 1, channel)
     end
-    sequencer.grid_redraw()
+
+end
+
+function sequencer.apply_pattern_switch(pattern_index)
+    pattern_index = pattern_index or sequencer.next_pattern_index
+    if sequencer.next_pattern_index then
+        local pattern_index = sequencer.next_pattern_index
+        
+        if sequencer.steps and #sequencer.steps > 0 then
+            for y, row in ipairs(sequencer.steps) do
+                sequencer.song.patterns[sequencer.active_pattern_index][y] = row
+                sequencer.song.patterns[sequencer.active_pattern_index][y].drum_key = sequencer.drum_keys[y]
+                sequencer.song.patterns[sequencer.active_pattern_index][y].drum_level = sequencer.drum_levels[y]
+            end
+        end
+        
+        if pattern_index <= #sequencer.song.patterns then
+            sequencer.active_pattern_index = pattern_index
+        else
+            local new_pattern = sequencer.create_empty_pattern()
+            sequencer.song.patterns[pattern_index] = new_pattern
+            sequencer.active_pattern_index = pattern_index
+        end
+        
+        sequencer.steps = sequencer.song.patterns[sequencer.active_pattern_index]
+
+        sequencer.drum_keys = {}
+        sequencer.drum_levels = {}
+        for y, row in ipairs(sequencer.steps) do
+            sequencer.drum_keys[y] = row.drum_key
+            sequencer.drum_levels[y] = row.drum_level
+        end
+        sequencer.grid_redraw()
+
+        sequencer.next_pattern_index = nil
+    end
 end
 
 function sequencer.update()
     sequencer.beat_position = sequencer.beat_position % 16 + 1
     sequencer.play(sequencer.beat_position)
+    
+    if sequencer.beat_position == 16 then
+        sequencer.apply_pattern_switch()
+    end
+    
     sequencer.grid_redraw()
     sequencer.draw_beat()
 end
