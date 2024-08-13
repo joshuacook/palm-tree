@@ -6,7 +6,6 @@ local FADE_TIME = 0.005
 local PATTERNS_DIRECTORY = _path.dust .. "code/palm-tree/songs/"
 
 local sequencer = {}
-local BeatClock = require 'beatclock'
 local midi_out = midi.connect(1)
 
 sequencer.next_pattern_index = nil
@@ -28,7 +27,7 @@ function load_song(sequencer, filename)
         sequencer.song.filename = filename
         sequencer.song.patterns = parse_patterns(song.patterns)
 
-        sequencer.clock:bpm_change(sequencer.song.bpm)
+        params:set("clock_tempo", sequencer.song.bpm)
     else
         print("Error: Could not open file. Error: " .. (err or "unknown error"))
     end
@@ -154,15 +153,14 @@ function serialize_patterns(patterns)
     return serialized_patterns
 end
 
-function sequencer.init(grid, sample_library, sample_keys)
+function sequencer.init(grid, clock, sample_library, sample_keys)
     if not grid or not grid.all then
         error("Grid not properly initialized")
     end
     sequencer.grid = grid
+    sequencer.clock = clock
     sequencer.sample_library = sample_library
     sequencer.sample_keys = sample_keys
-
-    sequencer.clock = BeatClock.new()
 
     sequencer.current_grid_page = 1
     sequencer.active_pattern_index = 1
@@ -172,12 +170,24 @@ function sequencer.init(grid, sample_library, sample_keys)
     sequencer.apply_pattern_switch(1)
 
     sequencer.beat_position = 0
-    sequencer.clock:bpm_change(sequencer.song.bpm)
-    sequencer.clock.on_step = sequencer.update
+    params:set("clock_tempo", sequencer.song.bpm)
     
-    sequencer.playing = false
     sequencer.n_players = N_PLAYERS
     sequencer.selected_drum = 1
+    
+    sequencer.clock.transport.start = function()
+        sequencer.clock.id = sequencer.clock.run(function()
+            while true do
+                sequencer.clock.sync(1/4)
+                sequencer.update()
+            end
+        end)
+    end
+    
+    sequencer.clock.transport.stop = function(id)
+        sequencer.clock.cancel(sequencer.clock.id)
+        sequencer.clock.id = nil
+    end
 end
 
 function sequencer.draw_beat()
@@ -213,7 +223,7 @@ function sequencer.load_song(filename)
     sequencer.switch_pattern(sequencer.active_pattern_index)
 end
 
-function sequencer.play(beat_position)
+function sequencer.play_voices(beat_position)
     local voice = 1
     for y = 1, N_PLAYERS do
         local step_value = sequencer.steps[y][beat_position]
@@ -319,7 +329,7 @@ end
 
 function sequencer.update()
     sequencer.beat_position = sequencer.beat_position % 16 + 1
-    sequencer.play(sequencer.beat_position)
+    sequencer.play_voices(sequencer.beat_position)
     
     if sequencer.beat_position == 16 then
         sequencer.apply_pattern_switch()
@@ -340,6 +350,14 @@ function sequencer.create_empty_pattern()
         new_pattern[y].drum_level = 1 -- Default level is 1
     end
     return new_pattern
+end
+
+function sequencer.play()
+    sequencer.clock.transport.start()
+end
+
+function sequencer.stop()
+    sequencer.clock.transport.stop()
 end
 
 return sequencer

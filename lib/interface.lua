@@ -21,9 +21,9 @@ end
 
 function enc_main(encoder, value, sequencer)
     if encoder == 2 then
-        sequencer.song.bpm = util.clamp(sequencer.song.bpm + value, 20, 300)
-        sequencer.clock:bpm_change(sequencer.song.bpm)
-        params:set("clock_tempo", sequencer.song.bpm)
+        local new_bpm = util.clamp(params:get("clock_tempo") + value, 20, 300)
+        params:set("clock_tempo", new_bpm)
+        sequencer.song.bpm = new_bpm
     elseif encoder == 3 then
         local current_output_level = params:get("output_level")
         sequencer.song.output_level = util.clamp(current_output_level + value, -60.00, 6.00)
@@ -106,14 +106,12 @@ end
 
 function key_main(key, value, sequencer, midi_out)
     if key == 2 and value == 1 then
-        if sequencer.playing then
-            sequencer.clock:stop()
-            sequencer.playing = false
+        if sequencer.clock.id then
+            sequencer.clock.transport.stop()
             midi_out:stop()
         else
             sequencer.beat_position = 0
-            sequencer.clock:start()
-            sequencer.playing = true
+            sequencer.clock.transport.start()
             midi_out:start()
         end
     elseif key == 3 and value == 1 then
@@ -124,46 +122,3 @@ function key_main(key, value, sequencer, midi_out)
         end
     end
 end
-
-function my_hid.init(sequencer, interface, params)
-    my_hid.interface = interface
-    my_hid.interface.event = my_hid.event_handler
-    my_hid.output_level_position = 7
-    my_hid.output_level = -30.00
-    my_hid.min_val = -57.0
-    my_hid.max_val = 6.0
-    my_hid.sequencer = sequencer
-    my_hid.params = params
-    my_hid.screen = screen
-end
-
-function my_hid.compute_output_level(code)
-    if code == 712 then
-        my_hid.output_level_position = my_hid.output_level_position - 1
-    elseif code == 713 then
-        my_hid.output_level_position = my_hid.output_level_position + 1
-    end
-
-    if my_hid.output_level_position < 0 then
-        my_hid.output_level_position = 0
-    elseif my_hid.output_level_position > 15 then
-        my_hid.output_level_position = 15
-    end
-    my_hid.output_level = my_hid.min_val + (my_hid.max_val - my_hid.min_val) * (my_hid.output_level_position - 1) / 14
-end
-
-function my_hid.event_handler(type, code, val)
-    if code == 312 then
-        my_hid.sequencer.clock:stop()
-        my_hid.sequencer.playing = false
-    elseif code == 313 then
-        my_hid.sequencer.clock:start()
-        my_hid.sequencer.playing = true
-    elseif val == 1 and (code == 712 or code == 713) then
-        my_hid.compute_output_level(code)
-        my_hid.params:set("output_level", my_hid.output_level)
-    end
-end
-
-return my_hid
-

@@ -1,6 +1,6 @@
 -- machine.lua
 
-my_hid = include('lib/interface')
+include('lib/interface')
 include('lib/screen')
 sequencer = include('lib/sequencer')
 
@@ -98,7 +98,7 @@ function init()
 
     voices_init()
     sample_library, sample_keys = buffer_init()
-    sequencer.init(my_grid, sample_library, sample_keys)
+    sequencer.init(my_grid, clock, sample_library, sample_keys)
 
     params:set("output_level", tonumber(sequencer.song.output_level))
     prev_output_level = params:get("output_level")
