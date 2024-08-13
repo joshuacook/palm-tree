@@ -15,60 +15,7 @@ local typing_number = false
 local AUDIO_DIRECTORY = norns.state.path .. "audio/"
 
 local selected_param = 1
-local params_list = {"fade_time", "attack_time"}
-
-local function get_duration(file)
-    local handle = io.popen("soxi -D " .. file)
-    local result = handle:read("*a")
-    handle:close()
-    return tonumber(result)
-end
-
-function load_buffer(path, start)
-    softcut.buffer_read_mono(path, 0, start, -1, 1, 1)
-end
-
-function buffer_init()
-    local sample_library = {}
-    local sample_keys = {}
-    local files = norns.system_glob(AUDIO_DIRECTORY .. "*.wav")
-    local start = 0
-    for _, file in ipairs(files) do
-        local filename = file:match("([^/]+)%.wav$")
-        sample_keys[#sample_keys + 1] = filename
-        local duration = get_duration(file)
-        load_buffer(file, start)
-        sample_library[filename] = { file = file, duration = duration, start = start }
-        start = start + duration
-    end
-
-    
-    for _, drum in ipairs(sample_library) do
-        drum.start = start
-        load_buffer(drum.file, start)
-        start = start + drum.duration
-    end
-    return sample_library, sample_keys
-end
-
-function voices_init()
-    softcut.buffer_clear()
-    for voice = 1, 6 do
-        configure_voice(voice)
-    end
-end
-
-function configure_voice(voice)
-    local fade_time = params:get("fade_time")
-    local attack_time = params:get("attack_time")
-    softcut.buffer(voice, 1)
-    softcut.loop(voice, 0)
-    softcut.enable(voice, 1)
-    softcut.rate(voice, 1)
-    softcut.fade_time(voice, fade_time)
-    softcut.level_slew_time(voice, fade_time)
-    softcut.recpre_slew_time(voice, attack_time)
-end
+local params_list = {"fade_time"}
 
 function init()
     midi_out = midi.connect(1)
@@ -79,19 +26,11 @@ function init()
     
     params:add_control("fade_time", "Fade Time", controlspec.new(0.001, 0.5, 'exp', 0.001, 0.01, 's'))
     params:set("fade_time", 0.01)
-    params:add_control("attack_time", "Attack Time", controlspec.new(0, 1, 'lin', 0.01, 0.01, 's'))
-    params:set("attack_time", 0.01)
 
     params:set_action("fade_time", function(value)
         for voice = 1, 6 do
             softcut.fade_time(voice, value)
             softcut.level_slew_time(voice, value)
-            softcut.recpre_slew_time(voice, value)
-        end
-    end)
-    
-    params:set_action("attack_time", function(value)
-        for voice = 1, 6 do
             softcut.recpre_slew_time(voice, value)
         end
     end)
@@ -111,74 +50,6 @@ function init()
 
 
     redraw()
-end
-
-function keyboard.code(code, value)
-    if value == 1 then
-        if page == 2 then
-            if code == "KPENTER" then
-                if typing_number then
-                    typing_number = false
-                    local new_level = tonumber(my_number)
-                    local selected_drum = sequencer.selected_drum
-                    if new_level then
-                        sequencer.drum_levels[selected_drum] = new_level
-                    end
-                    my_number = nil
-                    redraw()
-                end
-            elseif code == "KPMINUS" then
-                if typing_number and #my_number > 0 then
-                    my_number = my_number:sub(1, -2)
-                    redraw()
-                end
-            elseif code == "KPDOT" then
-                if typing_number and not my_number:find("%.") then
-                    my_number = my_number .. "."
-                    redraw()
-                end
-            elseif code:match("^KP%d$") then
-                local digit = code:sub(3)
-                if typing_number then
-                    my_number = my_number .. digit
-                else
-                    my_number = digit
-                    typing_number = true
-                end
-                redraw()
-            end
-        else
-            if code == "KPENTER" then
-                if typing_number then
-                    typing_number = false
-                    my_number = tonumber(my_number)
-                    sequencer.switch_pattern(my_number)
-                    my_number = nil
-                    redraw()
-                end
-            elseif code == "KPMINUS" then
-                if typing_number and #my_number > 0 then
-                    my_number = my_number:sub(1, -2)
-                    redraw()
-                end
-            elseif code == "NUMLOCK" then
-                if typing_number then
-                    typing_number = false
-                    my_number = nil
-                    redraw()
-                end
-            elseif code:match("^KP%d$") then
-                local digit = code:sub(3)
-                if typing_number then
-                    my_number = my_number .. digit
-                else
-                    my_number = digit
-                    typing_number = true
-                end
-                redraw()
-            end
-        end
-    end
 end
 
 function check_param_change()
@@ -246,4 +117,55 @@ function my_grid.key(x, y, z)
         sequencer.step_cycle(x, y)
     end
     sequencer.grid_redraw()
+end
+
+local function get_duration(file)
+    local handle = io.popen("soxi -D " .. file)
+    local result = handle:read("*a")
+    handle:close()
+    return tonumber(result)
+end
+
+function load_buffer(path, start)
+    softcut.buffer_read_mono(path, 0, start, -1, 1, 1)
+end
+
+function buffer_init()
+    local sample_library = {}
+    local sample_keys = {}
+    local files = norns.system_glob(AUDIO_DIRECTORY .. "*.wav")
+    local start = 0
+    for _, file in ipairs(files) do
+        local filename = file:match("([^/]+)%.wav$")
+        sample_keys[#sample_keys + 1] = filename
+        local duration = get_duration(file)
+        load_buffer(file, start)
+        sample_library[filename] = { file = file, duration = duration, start = start }
+        start = start + duration
+    end
+
+    
+    for _, drum in ipairs(sample_library) do
+        drum.start = start
+        load_buffer(drum.file, start)
+        start = start + drum.duration
+    end
+    return sample_library, sample_keys
+end
+
+function voices_init()
+    softcut.buffer_clear()
+    for voice = 1, 6 do
+        configure_voice(voice)
+    end
+end
+
+function configure_voice(voice)
+    local fade_time = params:get("fade_time")
+    softcut.buffer(voice, 1)
+    softcut.loop(voice, 0)
+    softcut.enable(voice, 1)
+    softcut.rate(voice, 1)
+    softcut.fade_time(voice, fade_time)
+    softcut.level_slew_time(voice, fade_time)
 end
