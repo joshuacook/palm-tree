@@ -88,6 +88,16 @@ function key(current_key, value)
             key_main(current_key, value, sequencer, midi_out)
         elseif page == 3 then
             confirmation_mode = key_load_and_save(current_key, value)
+            if confirmation_mode == "load" then
+                local success = sequencer.load_song(sequencer.song.filename)
+                if success then
+                    sequencer.grid_redraw()
+                    print("Song loaded successfully")
+                else
+                    print("Failed to load song")
+                end
+                confirmation_mode = nil
+            end
         end
     end
     redraw()

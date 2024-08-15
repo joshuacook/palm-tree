@@ -14,44 +14,58 @@ function load_song(sequencer, filename)
     local full_path = PATTERNS_DIRECTORY .. filename
     local file, err = io.open(full_path, "r")
 
-    if file then
-        local content = file:read("*a")
-        file:close()
-        
-        sequencer.steps = {}
-        sequencer.drum_keys = {}
-        sequencer.drum_levels = {}
-
-        local song = parse_song(content)
-        sequencer.song = song
-        sequencer.song.filename = filename
-        sequencer.song.patterns = parse_patterns(song.patterns)
-
-        params:set("clock_tempo", sequencer.song.bpm)
-    else
+    if not file then
         print("Error: Could not open file. Error: " .. (err or "unknown error"))
+        return false
     end
+
+    local content = file:read("*a")
+    file:close()
+    
+    local song = parse_song(content)
+    if not song then
+        print("Error: Failed to parse song")
+        return false
+    end
+
+    sequencer.song = song
+    sequencer.song.filename = filename
+    sequencer.song.patterns = parse_patterns(song.patterns)
+
+    sequencer.steps = sequencer.song.patterns[1] or {}
+    sequencer.drum_keys = {}
+    sequencer.drum_levels = {}
+    for i, row in ipairs(sequencer.steps) do
+        sequencer.drum_keys[i] = row.drum_key or "default_key"
+        sequencer.drum_levels[i] = row.drum_level or 1
+    end
+
+    params:set("clock_tempo", sequencer.song.bpm or 120)
+
+    sequencer.active_pattern_index = 1
+    sequencer.current_grid_page = 1
+
+    return true
 end
 
 function parse_patterns(patterns)
     local parsed_patterns = {}
     for _, pattern_str in ipairs(patterns) do
         local pattern = {}
-        local row = 1
-        for line in string.gmatch(pattern_str, "[^\n]+") do
+        for row in string.gmatch(pattern_str, "[^\n]+") do
+            local row_data = {}
             local col = 1
-            pattern[row] = {}
-            for step in string.gmatch(line, "%S+") do
+            for step in string.gmatch(row, "%S+") do
                 if col <= 16 then
-                    pattern[row][col] = tonumber(step)
+                    row_data[col] = tonumber(step) or 0
                 elseif col == 17 then
-                    pattern[row].drum_key = step
+                    row_data.drum_key = step
                 elseif col == 18 then
-                    pattern[row].drum_level = tonumber(step)
+                    row_data.drum_level = tonumber(step) or 1
                 end
                 col = col + 1
             end
-            row = row + 1
+            table.insert(pattern, row_data)
         end
         table.insert(parsed_patterns, pattern)
     end
@@ -201,17 +215,25 @@ function sequencer.get_step(x, y)
 end
 
 function sequencer.grid_redraw()
+    if not sequencer.grid or not sequencer.steps then
+        print("Warning: grid or steps not initialized")
+        return
+    end
+
     sequencer.grid:all(0)
     local start_drum = (sequencer.current_grid_page - 1) * PLAYERS_PER_PAGE + 1
     local end_drum = math.min(start_drum + PLAYERS_PER_PAGE - 1, N_PLAYERS)
     
     for i = start_drum, end_drum do
-        local row = (i - 1) % PLAYERS_PER_PAGE + 1
-        for col = 1, 16 do
-            local step_value = sequencer.steps[i][col]
-            if step_value > 0 then
-                local intensity = step_value * 7
-                sequencer.grid:led(col, row, intensity)
+        local row = sequencer.steps[i]
+        if row then
+            local grid_row = (i - 1) % PLAYERS_PER_PAGE + 1
+            for col = 1, 16 do
+                local step_value = row[col] or 0
+                if step_value > 0 then
+                    local intensity = math.floor(step_value * 7)
+                    sequencer.grid:led(col, grid_row, intensity)
+                end
             end
         end
     end
@@ -219,8 +241,11 @@ function sequencer.grid_redraw()
 end
 
 function sequencer.load_song(filename)
-    load_song(sequencer, filename)
+    if not load_song(sequencer, filename) then
+        return false
+    end
     sequencer.switch_pattern(sequencer.active_pattern_index)
+    return true
 end
 
 function sequencer.play_voices(beat_position)
@@ -284,12 +309,25 @@ function sequencer.step_cycle(x, y)
 end
 
 function sequencer.switch_pattern(pattern_index)
-    sequencer.next_pattern_index = pattern_index
+    if not sequencer.song.patterns[pattern_index] then
+        print("Warning: Pattern " .. pattern_index .. " does not exist")
+        return
+    end
+
+    sequencer.active_pattern_index = pattern_index
+    sequencer.steps = sequencer.song.patterns[pattern_index]
+
+    -- Update drum_keys and drum_levels
+    for i, row in ipairs(sequencer.steps) do
+        sequencer.drum_keys[i] = row.drum_key or sequencer.drum_keys[i] or "default_key"
+        sequencer.drum_levels[i] = row.drum_level or sequencer.drum_levels[i] or 1
+    end
+
+    sequencer.grid_redraw()
 
     for channel = 1, 4 do
         midi_out:program_change(pattern_index - 1, channel)
     end
-
 end
 
 function sequencer.apply_pattern_switch(pattern_index)
