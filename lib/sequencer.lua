@@ -335,12 +335,22 @@ function sequencer.apply_pattern_switch(pattern_index)
     if sequencer.next_pattern_index then
         local pattern_index = sequencer.next_pattern_index
         
+        -- Save current pattern state including drum assignments
         if sequencer.steps and #sequencer.steps > 0 then
+            -- Create a deep copy of the current pattern
+            local current_pattern = {}
             for y, row in ipairs(sequencer.steps) do
-                sequencer.song.patterns[sequencer.active_pattern_index][y] = row
-                sequencer.song.patterns[sequencer.active_pattern_index][y].drum_key = sequencer.drum_keys[y]
-                sequencer.song.patterns[sequencer.active_pattern_index][y].drum_level = sequencer.drum_levels[y]
+                current_pattern[y] = {}
+                -- Copy step values
+                for x = 1, 16 do
+                    current_pattern[y][x] = row[x]
+                end
+                -- Save drum assignments
+                current_pattern[y].drum_key = sequencer.drum_keys[y]
+                current_pattern[y].drum_level = sequencer.drum_levels[y]
             end
+            -- Store the complete pattern
+            sequencer.song.patterns[sequencer.active_pattern_index] = current_pattern
         end
         
         if pattern_index <= #sequencer.song.patterns then
