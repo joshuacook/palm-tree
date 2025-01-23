@@ -314,10 +314,18 @@ function sequencer.switch_pattern(pattern_index)
         return
     end
 
+    -- Save current drum assignments before switching
+    if sequencer.steps then
+        for i, row in ipairs(sequencer.steps) do
+            row.drum_key = sequencer.drum_keys[i]
+            row.drum_level = sequencer.drum_levels[i]
+        end
+    end
+
     sequencer.active_pattern_index = pattern_index
     sequencer.steps = sequencer.song.patterns[pattern_index]
 
-    -- Update drum_keys and drum_levels
+    -- Update drum_keys and drum_levels from the new pattern
     for i, row in ipairs(sequencer.steps) do
         sequencer.drum_keys[i] = row.drum_key or sequencer.drum_keys[i] or "default_key"
         sequencer.drum_levels[i] = row.drum_level or sequencer.drum_levels[i] or 1
