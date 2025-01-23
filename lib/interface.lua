@@ -2,7 +2,7 @@
 
 function enc_global(encoder, value, page)
     if encoder == 1 then
-        page = util.clamp(page + value, 1, 4)
+        page = util.clamp(page + value, 1, 5)
     end
     return page
 end
