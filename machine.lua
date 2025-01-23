@@ -12,6 +12,15 @@ local confirmation_mode = nil
 local my_number = nil
 local typing_number = false
 
+-- Recording state
+local rec_armed_5 = false
+local rec_armed_6 = false
+local rec_active_5 = false
+local rec_active_6 = false
+local rec_start_pos_5 = 4.0  -- Start at 4 second mark in buffer
+local rec_start_pos_6 = 5.0  -- Start at 5 second mark in buffer
+local REC_LENGTH = 1.0       -- Record for 1 second
+
 local AUDIO_DIRECTORY = norns.state.path .. "audio/"
 
 local selected_param = 1
@@ -76,6 +85,8 @@ function enc(current_encoder, value)
         elseif current_encoder == 3 then
             params:delta(params_list[selected_param], value)
         end
+    elseif page == 5 then
+        -- Recording page
     end
     redraw()
 end
@@ -98,6 +109,16 @@ function key(current_key, value)
                 end
                 confirmation_mode = nil
             end
+        elseif page == 5 then
+            if value == 1 then  -- Key press
+                if current_key == 2 then
+                    rec_armed_5 = not rec_armed_5
+                    if not rec_armed_5 then rec_active_5 = false end
+                elseif current_key == 3 then
+                    rec_armed_6 = not rec_armed_6
+                    if not rec_armed_6 then rec_active_6 = false end
+                end
+            end
         end
     end
     redraw()
@@ -117,6 +138,21 @@ function redraw()
             page_load_and_save(screen, sequencer)
         elseif page == 4 then
             page_parameters(screen, selected_param, params_list)
+        elseif page == 5 then
+            screen.level(15)
+            screen.move(2, 10)
+            screen.text("Recording Page")
+            
+            screen.move(2, 30)
+            screen.text("Voice 5: " .. (rec_armed_5 and "ARMED" or "inactive"))
+            if rec_active_5 then screen.text(" [REC]") end
+            
+            screen.move(2, 40)
+            screen.text("Voice 6: " .. (rec_armed_6 and "ARMED" or "inactive"))
+            if rec_active_6 then screen.text(" [REC]") end
+            
+            screen.move(2, 60)
+            screen.text("K2/K3: arm/disarm voices")
         end
     end
     screen.update()
@@ -171,4 +207,12 @@ function configure_voice(voice)
     softcut.rate(voice, 1)
     softcut.fade_time(voice, fade_time)
     softcut.level_slew_time(voice, fade_time)
+    
+    -- Configure recording voices
+    if voice == 5 or voice == 6 then
+        softcut.level_input_cut(1, voice, 1.0)
+        softcut.level_input_cut(2, voice, 1.0)
+        softcut.rec_level(voice, 1.0)
+        softcut.pre_level(voice, 0.0)
+    end
 end

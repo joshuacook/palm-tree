@@ -369,6 +369,42 @@ function sequencer.update()
     sequencer.beat_position = sequencer.beat_position % 16 + 1
     sequencer.play_voices(sequencer.beat_position)
     
+    if sequencer.beat_position == 1 then
+        -- Handle recording for voice 5
+        if rec_armed_5 then
+            if rec_active_5 then
+                -- Stop recording
+                softcut.rec(5, 0)
+                rec_active_5 = false
+                -- Play back the recording
+                softcut.position(5, rec_start_pos_5)
+                softcut.play(5, 1)
+            else
+                -- Start recording
+                softcut.position(5, rec_start_pos_5)
+                softcut.rec(5, 1)
+                rec_active_5 = true
+            end
+        end
+        
+        -- Handle recording for voice 6
+        if rec_armed_6 then
+            if rec_active_6 then
+                -- Stop recording
+                softcut.rec(6, 0)
+                rec_active_6 = false
+                -- Play back the recording
+                softcut.position(6, rec_start_pos_6)
+                softcut.play(6, 1)
+            else
+                -- Start recording
+                softcut.position(6, rec_start_pos_6)
+                softcut.rec(6, 1)
+                rec_active_6 = true
+            end
+        end
+    end
+    
     if sequencer.beat_position == 16 then
         sequencer.apply_pattern_switch()
     end
