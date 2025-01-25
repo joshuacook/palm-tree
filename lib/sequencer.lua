@@ -445,15 +445,13 @@ function sequencer.create_empty_pattern()
 end
 
 function sequencer.play()
-    midi_out:start()  -- Send MIDI start message
-    midi_out:cc(0xB0 + 10, 0x7A, 127)  -- Channel 11 (zero-based, so 10) start message
+    midi_out:start()  -- Send MIDI start message (0xFA)
     sequencer.clock.transport.start()
 end
 
 function sequencer.stop()
     sequencer.clock.transport.stop()
-    midi_out:stop()  -- Send MIDI stop message
-    midi_out:cc(0xB0 + 10, 0x7B, 127)  -- Channel 11 (zero-based, so 10) stop message
+    midi_out:stop()  -- Send MIDI stop message (0xFC)
 end
 
 return sequencer
