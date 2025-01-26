@@ -4,7 +4,8 @@
 local blackbox_state = {
     selected_pad = 1,
     recording = false,
-    armed_pads = {}
+    armed_pads = {},
+    loop_length = 1  -- In bars
 }
 
 function page_main(screen, sequencer, output_level, my_number)
@@ -36,21 +37,34 @@ function page_blackbox(screen)
     screen.clear()
     screen.level(15)
     
-    -- Draw status
-    screen.move(8, 16)
-    screen.text("BLACKBOX CONTROL")
-    
-    screen.move(8, 32)
-    screen.text("PAD " .. blackbox_state.selected_pad)
-    
-    screen.move(8, 40)
-    screen.text(blackbox_state.recording and "RECORDING" or "STOPPED")
-    
-    -- Draw controls
-    screen.move(8, 52)
-    screen.text("K2: Toggle Rec")
-    screen.move(8, 60)
-    screen.text("K3: Clear Pad")
+    if blackbox_state.recording then
+        -- Recording mode layout
+        screen.move(8, 16)
+        screen.text("RECORDING MODE")
+        
+        screen.move(8, 32)
+        screen.text("TOP: Record Controls")
+        screen.move(8, 40) 
+        screen.text("MID: Loop Length (1-16)")
+        screen.move(8, 48)
+        screen.text("BOT: Playback Controls")
+        
+        screen.move(8, 60)
+        screen.text("Length: " .. (blackbox_state.loop_length or "1") .. " bars")
+    else
+        -- Normal mode
+        screen.move(8, 16)
+        screen.text("BLACKBOX CONTROL")
+        
+        screen.move(8, 32)
+        screen.text("PAD " .. blackbox_state.selected_pad)
+        
+        -- Draw controls
+        screen.move(8, 52)
+        screen.text("K2: Start Recording")
+        screen.move(8, 60)
+        screen.text("K3: Clear Pad")
+    end
     
     screen.update()
 end
