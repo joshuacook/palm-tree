@@ -149,6 +149,11 @@ function redraw()
 end
 
 function my_grid.key(x, y, z)
+    if page == 2 then
+        -- Blackbox control page - don't trigger sequencer
+        return
+    end
+    
     if z == 1 then
         sequencer.step_cycle(x, y)
     end
