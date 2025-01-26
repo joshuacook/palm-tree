@@ -76,19 +76,19 @@ function enc(current_encoder, value)
     elseif page == 1 then
         enc_main(current_encoder, value, sequencer)
     elseif page == 2 then
-        enc_sampler(current_encoder, value, sequencer)
+        -- Blackbox control page
+        if handle_blackbox_enc(current_encoder, value) then
+            -- Handled by blackbox screen
+        end
     elseif page == 3 then
-        enc_load_and_save(current_encoder, value, sequencer)
+        enc_sampler(current_encoder, value, sequencer)
     elseif page == 4 then
+        enc_load_and_save(current_encoder, value, sequencer)
+    elseif page == 5 then
         if current_encoder == 2 then
             selected_param = util.clamp(selected_param + value, 1, #params_list)
         elseif current_encoder == 3 then
             params:delta(params_list[selected_param], value)
-        end
-    elseif page == 5 then
-        -- Blackbox control page
-        if handle_blackbox_enc(current_encoder, value) then
-            -- Handled by blackbox screen
         end
     end
     redraw()
@@ -136,13 +136,13 @@ function redraw()
             local output_level = params:get("output_level")
             page_main(screen, sequencer, output_level, my_number)
         elseif page == 2 then
-            page_sampler(screen, sequencer)
-        elseif page == 3 then
-            page_load_and_save(screen, sequencer)
-        elseif page == 4 then
-            page_parameters(screen, selected_param, params_list)
-        elseif page == 5 then
             page_blackbox(screen)
+        elseif page == 3 then
+            page_sampler(screen, sequencer)
+        elseif page == 4 then
+            page_load_and_save(screen, sequencer)
+        elseif page == 5 then
+            page_parameters(screen, selected_param, params_list)
         end
     end
     screen.update()
