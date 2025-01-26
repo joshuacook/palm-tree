@@ -72,7 +72,7 @@ end
 
 function enc(current_encoder, value)
     if current_encoder == 1 then
-        page = enc_global(current_encoder, value, page)
+        page = util.clamp(page + value, 1, 6)  -- Now 6 pages total
     elseif page == 1 then
         enc_main(current_encoder, value, sequencer)
     elseif page == 2 then
@@ -87,6 +87,11 @@ function enc(current_encoder, value)
         end
     elseif page == 5 then
         -- Recording page
+    elseif page == 6 then
+        -- Blackbox control page
+        if handle_blackbox_enc(current_encoder, value) then
+            -- Handled by blackbox screen
+        end
     end
     redraw()
 end
@@ -153,6 +158,8 @@ function redraw()
             
             screen.move(2, 60)
             screen.text("K2/K3: arm/disarm voices")
+        elseif page == 6 then
+            page_blackbox(screen)
         end
     end
     screen.update()
