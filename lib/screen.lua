@@ -5,8 +5,42 @@ local blackbox_state = {
     selected_pad = 1,
     recording = false,
     armed_pads = {},
-    loop_length = 1  -- In bars
+    loop_length = 1,  -- In bars
+    -- Store which middle row is lit for each column (2-7 valid)
+    column_states = {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2}
 }
+
+-- Handle grid input for blackbox page
+function handle_grid_input(x, y, z)
+    if z == 1 then  -- Only handle press
+        if y >= 2 and y <= 7 then
+            -- Middle rows - single value per column
+            blackbox_state.column_states[x] = y
+            return true
+        end
+    end
+    return false
+end
+
+-- Draw grid for blackbox page
+function draw_blackbox_grid(g)
+    g:all(0)
+    -- Draw middle row selections
+    for x = 1,16 do
+        g:led(x, blackbox_state.column_states[x], 15)
+    end
+    -- Top row for recording
+    for x = 1,16 do
+        if blackbox_state.armed_pads[x] then
+            g:led(x, 1, blackbox_state.recording and 15 or 8)
+        end
+    end
+    -- Bottom row for playback
+    for x = 1,16 do
+        g:led(x, 8, 4)  -- Dim for now
+    end
+    g:refresh()
+end
 
 function page_main(screen, sequencer, output_level, my_number)
     local bpm = sequencer.song.bpm

@@ -151,7 +151,10 @@ end
 
 function my_grid.key(x, y, z)
     if page == 2 then
-        -- Blackbox control page - don't trigger sequencer
+        -- Blackbox control page
+        if handle_grid_input(x, y, z) then
+            redraw_grid()
+        end
         return
     end
     
@@ -164,8 +167,7 @@ end
 -- Override grid redraw for different pages
 function redraw_grid()
     if page == 2 then
-        my_grid:all(0)
-        my_grid:refresh()
+        draw_blackbox_grid(my_grid)
     else
         sequencer.grid_redraw()
     end
