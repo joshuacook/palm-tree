@@ -1,5 +1,12 @@
 -- lib/screen.lua
 
+-- Screen state for blackbox control
+local blackbox_state = {
+    selected_pad = 1,
+    recording = false,
+    armed_pads = {}
+}
+
 function page_main(screen, sequencer, output_level, my_number)
     local bpm = sequencer.song.bpm
     local title = sequencer.song.title
@@ -21,8 +28,65 @@ function page_main(screen, sequencer, output_level, my_number)
     screen.move(8, 52)
     screen.text("K2: Toggle Play")
     screen.move(8, 60)
-    screen.text("K3: Toggle Page")
+    screen.text("K3: Next Page")
     screen.update()
+end
+
+function page_blackbox(screen)
+    screen.clear()
+    
+    -- Draw grid
+    for y=1,4 do
+        for x=1,4 do
+            local pad = (y-1)*4 + x
+            local x_pos = x * 32 - 16
+            local y_pos = y * 16
+            
+            -- Draw pad outline
+            screen.level(blackbox_state.selected_pad == pad and 15 or 5)
+            screen.rect(x_pos-12, y_pos-8, 24, 16)
+            screen.stroke()
+            
+            -- Fill if recording/armed
+            if blackbox_state.recording and blackbox_state.armed_pads[pad] then
+                screen.level(15)
+                screen.rect(x_pos-11, y_pos-7, 22, 14)
+                screen.fill()
+            end
+        end
+    end
+    
+    -- Draw status
+    screen.move(8, 52)
+    screen.level(15)
+    screen.text("PAD " .. blackbox_state.selected_pad)
+    screen.move(8, 60)
+    screen.text(blackbox_state.recording and "RECORDING" or "STOPPED")
+    
+    screen.update()
+end
+
+-- Handle blackbox screen input
+function handle_blackbox_enc(n, d)
+    if n == 2 then
+        -- Select pad
+        blackbox_state.selected_pad = util.clamp(blackbox_state.selected_pad + d, 1, 16)
+        return true
+    end
+    return false
+end
+
+function handle_blackbox_key(n, z)
+    if n == 2 and z == 1 then
+        -- Toggle record arm
+        blackbox_state.armed_pads[blackbox_state.selected_pad] = not blackbox_state.armed_pads[blackbox_state.selected_pad]
+        return true
+    elseif n == 3 and z == 1 then
+        -- Toggle recording
+        blackbox_state.recording = not blackbox_state.recording
+        return true
+    end
+    return false
 end
 
 function page_sampler(screen, sequencer)
