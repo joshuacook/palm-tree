@@ -34,34 +34,23 @@ end
 
 function page_blackbox(screen)
     screen.clear()
-    
-    -- Draw grid
-    for y=1,4 do
-        for x=1,4 do
-            local pad = (y-1)*4 + x
-            local x_pos = x * 32 - 16
-            local y_pos = y * 16
-            
-            -- Draw pad outline
-            screen.level(blackbox_state.selected_pad == pad and 15 or 5)
-            screen.rect(x_pos-12, y_pos-8, 24, 16)
-            screen.stroke()
-            
-            -- Fill if recording/armed
-            if blackbox_state.recording and blackbox_state.armed_pads[pad] then
-                screen.level(15)
-                screen.rect(x_pos-11, y_pos-7, 22, 14)
-                screen.fill()
-            end
-        end
-    end
+    screen.level(15)
     
     -- Draw status
-    screen.move(8, 52)
-    screen.level(15)
+    screen.move(8, 16)
+    screen.text("BLACKBOX CONTROL")
+    
+    screen.move(8, 32)
     screen.text("PAD " .. blackbox_state.selected_pad)
-    screen.move(8, 60)
+    
+    screen.move(8, 40)
     screen.text(blackbox_state.recording and "RECORDING" or "STOPPED")
+    
+    -- Draw controls
+    screen.move(8, 52)
+    screen.text("K2: Toggle Rec")
+    screen.move(8, 60)
+    screen.text("K3: Clear Pad")
     
     screen.update()
 end
