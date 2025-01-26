@@ -35,9 +35,9 @@ function draw_blackbox_grid(g)
             g:led(x, 1, blackbox_state.recording and 15 or 8)
         end
     end
-    -- Bottom row for playback
+    -- Bottom row for playback starts unlit
     for x = 1,16 do
-        g:led(x, 8, 4)  -- Dim for now
+        g:led(x, 8, 0)  -- Unlit by default
     end
     g:refresh()
 end
