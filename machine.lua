@@ -73,6 +73,7 @@ end
 function enc(current_encoder, value)
     if current_encoder == 1 then
         page = util.clamp(page + value, 1, 5)  -- Now 5 pages total
+        redraw_grid()
     elseif page == 1 then
         enc_main(current_encoder, value, sequencer)
     elseif page == 2 then
@@ -156,8 +157,18 @@ function my_grid.key(x, y, z)
     
     if z == 1 then
         sequencer.step_cycle(x, y)
+        sequencer.grid_redraw()
     end
-    sequencer.grid_redraw()
+end
+
+-- Override grid redraw for different pages
+function redraw_grid()
+    if page == 2 then
+        my_grid:all(0)
+        my_grid:refresh()
+    else
+        sequencer.grid_redraw()
+    end
 end
 
 function load_buffer(path, start)
